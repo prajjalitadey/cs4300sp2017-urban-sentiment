@@ -1,38 +1,72 @@
 <html>
     <head>
         <link rel="stylesheet" href="/static/bootstrap.min.css">
+        <link href="https://fonts.googleapis.com/css?family=Raleway:400,800,700" rel="stylesheet"> 
         <link rel="stylesheet" href="/static/main.css">
+        <script src="/static/javascript/jquery-3.1.1.min.js"></script>
+        <script src="/static/javascript/main.js"></script> 
     </head>
     
-    <body>
+    <body class="fill">
+        <!-- <img src"/static/media/nyc.jpg" style='height: 100%; width: 100%; object-fit: contain'/> -->
+
         <!-- TODO: Please change lines 10 and 11 according to your actual project name and student names-->
         <div class="topcorner">
-            <p>Urban Sentiment</p>
-            <p>Prajjalita Dey (pd292), Talha Baig (tmb276), Lylla Younes (ley23), Pihu Yadav (py82)</p>
+            <!-- <p>Urban Sentiment</p>
+            <p>Prajjalita Dey (pd292), Talha Baig (tmb276), Lylla Younes (ley23), Pihu Yadav (py82)</p> -->
         </div>
+
+        {% block javascript %}  
+            <script>
+                $(document).ready(function(){
+                    $("#input").change(function() {
+                        console.log( $(this).val() );
+                        var val = $(this).val();
+                        var form = $(this).closest("form");
+                        //console.log(form.attr("data-url"));
+
+                        $.ajax({
+                            url: '{% url "index" %}',
+                            dataType: "json",
+                            success: function (data) {
+                                console.log("Success: ", data);
+                            },
+                            error: function(e) {
+                                console.log("Error: ", e);
+                            }
+                        })
+
+                        
+
+                    });
+                });
+            </script>
+        {% endblock %}
+
+        {% block content %}
         
-        <form class="form-inline global-search" method='GET'>
-            <h1 style="font-size: 55px; font-family:Futura; color: #4285F4">
-                C
-                <font color=#EA4335>S</font>
-                <font color=#FBBC05>4</font>
-                3
-                <font color=#34A853>0</font>
-                <font color=#EA4335>0</font>
-            </h1>
-            
-            <br><br>
-            
-            <div class="form-group">
-                <input id="input" type="text" name="search" class="form-control" placeholder="Your Input">
-            </div>
-            <button type="submit" class="btn btn-info"> Go! </button>
-        </form>
+            <form class="form-inline global-search" method='GET' data-url="{% url 'index' %}">
+                <h1> Find Your Home. </h1><br>
+                <div class="blurb">
+                    <p>Separate criteria by commas. Query by city and what you desire in a neighborhood. <br> 
+                    Example: "New York, young professionals, affordable, bars nearby"</p>
+                </div>
+                
+                <br><br>
+                
+                <div class="form-group">
+                    <input id="input" type="text" name="search" class="form-control" placeholder="Your Input">
+                </div>
+                <button type="submit" class="btn btn-info"> Go </button>
+            </form>
+
+        {% endblock %}
         
         <div class="form-inline global-search">
             <h4>Output</h4><br>
+            
             {% for line in output %}
-                {{line}}<br>
+                {{line}} <br>
             {% endfor %}
             
             <div class="pagination">
@@ -52,5 +86,6 @@
                 </span>
             </div>
         </div>
+        
     </body>
 </html>

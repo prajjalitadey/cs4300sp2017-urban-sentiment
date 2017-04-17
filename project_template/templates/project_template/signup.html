@@ -1,0 +1,31 @@
+<html>
+    <head>
+        <link rel="stylesheet" href="/static/bootstrap.min.css">
+        <link href="https://fonts.googleapis.com/css?family=Raleway:400,800,700" rel="stylesheet"> 
+        <link rel="stylesheet" href="/static/main.css">
+        <script src="/static/javascript/jquery-3.1.1.min.js"></script>
+        <script src="/static/javascript/main.js"></script> 
+    </head>
+    
+    <body class="fill">
+    	{% block content %}
+		  <form method="post">
+		    {% csrf_token %}
+		    {{ form.as_p }}
+		    <button type="submit">Sign up</button>
+		  </form>
+		{% endblock %}
+
+    </body>
+</html>
+
+<!-- $.ajax({
+                        //     url: '{% url "index" %}',
+                        //     dataType: "json",
+                        //     success: function (data) {
+                        //         console.log("Success: ", data);
+                        //     },
+                        //     error: function(e) {
+                        //         console.log("Error: ", e);
+                        //     }
+                        // })-->

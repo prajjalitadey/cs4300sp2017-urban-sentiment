@@ -1,3 +1,9 @@
+h1 {
+	font-size: 55px; 
+	font-family:Raleway; 
+	font-weight: 800;
+	color: #36454f
+}
 @media (min-width: 1200px) {
 .container {
     max-width: 970px;
@@ -11,6 +17,16 @@ text-align:center;
 body {
 padding-top: 15%;
 padding-bottom: 15px;
+background-image: url('/static/media/nyc_smaller.jpg');
+}
+img {
+	max-width: 1000px;
+	max-height: 1000px;
+}
+.blurb p {
+	text-align: left;
+	margin-top: 2%;
+	margin-bottom: -2%
 }
 .global-search {
 text-align:center;
@@ -30,8 +46,11 @@ top:2%;
 right:2%;
 }
 .btn{
-background-color: #4285F4;
+background-color: #36454f;
 border: none
+}
+.btn:hover{
+	background-color: #cc5500 !important;
 }
 .step-links a{
 color: #4285F4;

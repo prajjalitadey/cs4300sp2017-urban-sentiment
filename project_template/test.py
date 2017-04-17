@@ -2,6 +2,7 @@ from .models import Docs
 import os
 import Levenshtein
 import json
+from nltk.corpus import wordnet as wn
 
 
 def read_file(n):
