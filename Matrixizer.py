@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 from nltk.tokenize import TreebankWordTokenizer
 import copy
 from bs4 import UnicodeDammit
+from collections import defaultdict
 
 class Matrixizer:
     
@@ -19,26 +20,33 @@ class Matrixizer:
     
     def __init__(self, listing_reviews):
         
-        self.vectorizer = TfidfVectorizer(max_df=.8, min_df=.05,
+        self.vectorizer = TfidfVectorizer(max_df=1.0, min_df=0.0,
                                     max_features=5000, stop_words='english', norm='l2')
                 
         #Making the tfidf matrix using our reviews data
         self.matrix = self.vectorizer.fit_transform([ listing.getReviews()  for _, listings in listing_reviews.iteritems() for listing in listings])
 
         #dictionary that maps listings to their id in doc_by_vocab matrix
-        self.dict_neighborhoods = {neighborhood:[enumerate(i)] for neighborhood, listings in listings_reviews.iteritems() for listing in listings}
-        
+        i = 0; self.dict_neighborhoods = defaultdict(list);
+        for neighborhood, listings in listing_reviews.iteritems():
+            for listing in listings:
+                self.dict_neighborhoods[neighborhood].append(i);
+                i += 1;
         
     
     def query(self, query):
-        query_tfidf = tfidf_vec.transform([query])
+        query_tfidf = self.vectorizer.transform([query]).toarray().T;
         neighborhood_to_score = {}
-        for neighborhood in dict_neighborhoods.keys():
+        for neighborhood in self.dict_neighborhoods.keys():
             score = 0
-            for listing in dict_neighborhood[neighborhood]:
-                score += query_tfidf.multiply(matrix[listing])
-            score = score / len(listing)
+            for listing in self.dict_neighborhoods[neighborhood]:
+                print(listing)
+                print(self.matrix.getrow(listing).toarray())
+                print(self.matrix.getrow(listing).dot(query_tfidf))
+                score += self.matrix.getrow(listing).dot(query_tfidf)[0]
+            score = float(score) / len(self.dict_neighborhoods[neighborhood])
             neighborhood_to_score[neighborhood] =  score
+            print(score)
         return neighborhood_to_score
         
     def bernoulli_bayes(self, test):
