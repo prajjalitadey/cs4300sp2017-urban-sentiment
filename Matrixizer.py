@@ -19,22 +19,29 @@ class Matrixizer:
     
     def __init__(self, listing_reviews):
         
-        self.vectorizer = TfidfVectorizer(max_df=Max_df, min_df=Min_df,
-                                    max_features=n_feats,stop_words='english', norm='l2')
+        self.vectorizer = TfidfVectorizer(max_df=.8, min_df=.05,
+                                    max_features=5000, stop_words='english', norm='l2')
                 
         #Making the tfidf matrix using our reviews data
-        self.matrix = self.vectorizer.fit_transform(listings_reviews.values())
+        self.matrix = self.vectorizer.fit_transform([ listing.getReviews()  for _, listings in listing_reviews.iteritems() for listing in listings])
 
-        #dictionary that maps neighborhoods to their id in doc_by_vocab matrix
-        self.dict_neighborhoods = {neighborhood:enumerate(i) for neighborhood in listings_reviews}
+        #dictionary that maps listings to their id in doc_by_vocab matrix
+        self.dict_neighborhoods = {neighborhood:[enumerate(i)] for neighborhood, listings in listings_reviews.iteritems() for listing in listings}
         
         
     
     def query(self, query):
         query_tfidf = tfidf_vec.transform([query])
-        return {neighborhood:query_tfidf.multiply(doc_by_vocab[dict_neighborhoods[neighborhood]])}
+        neighborhood_to_score = {}
+        for neighborhood in dict_neighborhoods.keys():
+            score = 0
+            for listing in dict_neighborhood[neighborhood]:
+                score += query_tfidf.multiply(matrix[listing])
+            score = score / len(listing)
+            neighborhood_to_score[neighborhood] =  score
+        return neighborhood_to_score
         
-    def bernoulli_bayes(self, ):
+    def bernoulli_bayes(self, test):
         vectorizer = CountVectorizer(ngram_range=(1, 2))  # for  unigrams only use ngram_range=(1, 1)
         vectorizer.fit(msgs_train)
         
@@ -47,14 +54,10 @@ class Matrixizer:
         term_document_matrix_train=fsel.transform(term_document_matrix_train)
         
     
-    def mutlinomial_bayes(self, ):
+    def mutlinomial_bayes(self, test):
         pass
     
-    def svm(self, ):
+    def svm(self, test):
         pass
-    
-    def (self. ):
-        pass
-    
     
     
