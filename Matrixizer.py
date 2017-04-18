@@ -40,9 +40,6 @@ class Matrixizer:
         for neighborhood in self.dict_neighborhoods.keys():
             score = 0
             for listing in self.dict_neighborhoods[neighborhood]:
-                print(listing)
-                print(self.matrix.getrow(listing).toarray())
-                print(self.matrix.getrow(listing).dot(query_tfidf))
                 score += self.matrix.getrow(listing).dot(query_tfidf)[0]
             score = float(score) / len(self.dict_neighborhoods[neighborhood])
             neighborhood_to_score[neighborhood] =  score
