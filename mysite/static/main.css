@@ -19,6 +19,13 @@ padding-top: 15%;
 padding-bottom: 15px;
 background-image: url('/static/media/nyc_smaller.jpg');
 }
+.output {
+	width:500px;
+	height:250px;
+	margin-left:30%;
+	padding: 1%;
+	background-color: white;
+}
 img {
 	max-width: 1000px;
 	max-height: 1000px;

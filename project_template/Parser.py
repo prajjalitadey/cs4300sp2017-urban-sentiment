@@ -8,10 +8,10 @@ from Listing import Listing
 
 class Parser:
 
-    def __init__(self,csvfile):
+    def __init__(self):
         self.listings_reviews = {}
 
-    def parseAirbnb(self):
+    def parseAirbnb(self, csvfile):
         df_combination = pd.DataFrame.from_csv(csvfile, index_col=None)
 
         reviews = defaultdict(list)
