@@ -3,6 +3,7 @@ import numpy as np
 from sklearn.feature_extraction.text import TfidfVectorizer
 import json
 import matplotlib.pyplot as plt
+matplotlib.use('Agg')
 from nltk.tokenize import TreebankWordTokenizer
 import copy
 from bs4 import UnicodeDammit
