@@ -28,24 +28,6 @@ class Parser:
             all_list_objs = [Listing(lid, ' '.join(reviews[lid]), neighborhood) for lid in listing_ids if lid in reviews.keys()]
             neighborhoods[neighborhood] = all_list_objs
 
-        # change encoding of text
-        # UnicodeDammit(text).unicode_markup.encode("utf-8")
-        # check with df_test[2515][147]
-
-        # Combining list of reviews for each neighborhood, into a single string
-        # Also converting all the reviews text into UTF-8 encoding, to build the tf-idf later
-        # for neighborhood in listings_reviews:
-        #     if(len(listings_reviews[neighborhood]) > 1):
-        #         k = ' '.join(listings_reviews[neighborhood])
-        #         m = UnicodeDammit(k)
-        #         s = m.unicode_markup
-        #         listings_reviews[neighborhood] = s.encode("utf-8")
-        #     else:
-        #         if (len(listings_reviews[neighborhood]) == 1):
-        #             listings_reviews[neighborhood] = listings_reviews[neighborhood][0]
-        #         if (len(listings_reviews[neighborhood]) == 0):
-        #             listings_reviews[neighborhood] = 'the'  # i think empty text creates an error, hence this
-
         self.listings_reviews = neighborhoods
 
     def parseNYT(self):
