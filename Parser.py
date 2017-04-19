@@ -4,7 +4,7 @@ import pandas as pd
 from collections import defaultdict
 from bs4 import UnicodeDammit
 
-from Listing.py import Listing
+from Listing import Listing
 
 
 class Parser:
