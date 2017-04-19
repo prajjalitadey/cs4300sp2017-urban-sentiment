@@ -37,7 +37,8 @@ def get_neighborhood_ranking(q):
 	#transcripts = read_file(11)
 	query = "new york, outside of manhattan, quiet area, elderly people"
 	parser = Parser()
-	parser.parseAirbnb("/Users/lyllayounes/Desktop/cs4300sp2017-urban-sentiment/jsons/test.csv")
+	#parser.parseAirbnb("/Users/lyllayounes/Desktop/cs4300sp2017-urban-sentiment/jsons/test.csv")
+	parser.parseAirbnb("./jsons/test.csv")
 	listing = parser.getReviews()
 	output = Output(listing)
 	tups = output.getNaiveImpl(query)
