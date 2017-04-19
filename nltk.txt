@@ -1,3 +1,2 @@
-ptb
 treebank
 wordnet
