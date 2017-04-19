@@ -20,22 +20,24 @@ class Parser:
         df_listings = df_listings[['id', 'neighbourhood']]
         df_listings = df_listings.rename(columns={'id': 'listing_id'})
         df_combination = pd.merge(df_listings, df_reviews, on='listing_id')
-        df_combination.to_csv('jsons/nyc_combination.csv')
+        # df_combination.to_csv('jsons/nyc_combination.csv')
 
         reviews = defaultdict(list)
         listings = defaultdict(list)
         for row in df_combination.itertuples():
-            reviews[getattr(row, 'listing_id')].append(getattr(row, 'comments'))
-            listings[getattr(row, 'neighbourhood')].append(getattr(row, 'listing_id'))
+            text = getattr(row, 'comments')
+            if isinstance(text, basestring):
+                reviews[getattr(row, 'listing_id')].append(UnicodeDammit(text).unicode_markup.encode("utf-8"))
+                listings[getattr(row, 'neighbourhood')].append(getattr(row, 'listing_id'))
 
         # create neighborhoods dictionary with listing objects
         neighborhoods = {}
         for neighborhood, listing_ids in listings.iteritems():
-            all_list_objs = [Listing(lid, UnicodeDammit(' '.join(reviews[lid])).unicode_markup.encode("utf-8"), neighborhood) for lid in listing_ids if lid in reviews.keys()]
+            all_list_objs = [Listing(lid, ' '.join(reviews[lid]), neighborhood) for lid in listing_ids if lid in reviews.keys()]
             neighborhoods[neighborhood] = all_list_objs
 
         # change encoding of text
-        # UnicodeDammit(text_ex).unicode_markup.encode("utf-8")
+        # UnicodeDammit(text).unicode_markup.encode("utf-8")
         # check with df_test[2515][147]
 
         # Combining list of reviews for each neighborhood, into a single string
