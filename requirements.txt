@@ -11,5 +11,3 @@ numpy
 nltk
 matplotlib
 scikit-learn
-os
-
