@@ -35,7 +35,7 @@ def get_neighborhood_ranking(q):
 	parser.parseNYTimes("./jsons/nytimes_restaurants.csv")
 	airbnb = parser.getAirbnbReviews()
 	nytimes = parser.getNYTimesReviews()
-
+	
 	output = Output(airbnb, nytimes)
 	tups = output.getNaiveImpl(query) #TODO -- CHANGE
 	tmp = []

@@ -9,7 +9,7 @@ class Review:
         self.neighborhood = neighborhood
         self.score = 0
 
-    def getReview(self):
+    def getReviews(self):
         return self.review
 
     def getNeighborhood(self):

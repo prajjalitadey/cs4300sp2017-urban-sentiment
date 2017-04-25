@@ -24,12 +24,12 @@ class Parser:
                 listings[getattr(row, 'neighbourhood')].append(getattr(row, 'listing_id'))
 
         # create reviews dictionary with listing objects
-        reviews = {}
+        neighborhoods = {}
         for neighborhood, listing_ids in listings.iteritems():
             all_list_objs = [Listing(lid, ' '.join(reviews[lid]), neighborhood.lower()) for lid in listing_ids if lid in reviews.keys()]
-            reviews[neighborhood.lower()] = all_list_objs
+            neighborhoods[neighborhood.lower()] = all_list_objs
 
-        self.airbnb_reviews = reviews
+        self.airbnb_reviews = neighborhoods
 
     def parseNYTimes(self, csvfile):
         # TODO
