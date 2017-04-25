@@ -41,7 +41,7 @@ class Parser:
             review = getattr(row, 'summary')
             if isinstance(nbhd, basestring) and isinstance(review, basestring):
                 review = UnicodeDammit(review).unicode_markup.encode("utf-8")  # fix encoding
-                reviews[nbhd].append(Restaurant(getattr(row, 'reviewid'), nbhd.lower(), review, getattr(row, 'name')))
+                reviews[nbhd].append(Restaurant(nbhd.lower(), review, getattr(row, 'name')))
 
         self.nyt_reviews = reviews
 

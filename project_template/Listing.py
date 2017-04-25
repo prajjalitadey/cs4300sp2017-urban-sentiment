@@ -3,14 +3,11 @@ class Review:
     "parent" class
     """
 
-    def __init__(self, doc_id, neighborhood, review):
-        self.id = doc_id
+    def __init__(self, neighborhood, review):
+        # self.id = doc_id
         self.review = review
         self.neighborhood = neighborhood
         self.score = 0
-
-    def getID(self):
-        return self.id
 
     def getReview(self):
         return self.review
@@ -27,14 +24,18 @@ class Review:
 
 class Listing(Review):
 
-    def __init__(self, doc_id, neighborhood, review):
-        Review.__init__(self, doc_id, neighborhood, review)
+    def __init__(self, neighborhood, review, doc_id):
+        Review.__init__(self, neighborhood, review)
+        self.id = doc_id
+
+    def getID(self):
+        return self.id
 
 
 class Restaurant(Review):
 
-    def __init__(self, doc_id, neighborhood, review, name):
-        Review.__init__(self, doc_id, neighborhood, review)
+    def __init__(self, neighborhood, review, name):
+        Review.__init__(self, neighborhood, review)
         self.restaurant_name = name
 
     def getName(self):
