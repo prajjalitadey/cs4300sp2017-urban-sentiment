@@ -29,10 +29,13 @@ def find_similar(q):
 
 def get_neighborhood_ranking(q):
 	query = q
-	parser = Parser()
+	parser = Parser() 
 	parser.parseAirbnb("./jsons/test.csv")
-	listing = parser.getReviews()
-	output = Output(listing)
+	#parser.parseNYT("./jsons/nytimes_restaurants.csv")
+	airbnb = parser.getAirbnbReviews()
+	#nytimes = parser.getNYTimesReviews()
+	output = Output(airbnb)
+	#output = Output(nytimes) ...
 	tups = output.getNaiveImpl(query)
 	tmp = []
 	tmp.append([query])
