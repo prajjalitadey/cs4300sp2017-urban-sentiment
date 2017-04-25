@@ -26,12 +26,12 @@ class Parser:
         # create reviews dictionary with listing objects
         reviews = {}
         for neighborhood, listing_ids in listings.iteritems():
-            all_list_objs = [Listing(lid, ' '.join(reviews[lid]), neighborhood) for lid in listing_ids if lid in reviews.keys()]
-            reviews[neighborhood] = all_list_objs
+            all_list_objs = [Listing(lid, ' '.join(reviews[lid]), neighborhood.lower()) for lid in listing_ids if lid in reviews.keys()]
+            reviews[neighborhood.lower()] = all_list_objs
 
         self.airbnb_reviews = reviews
 
-    def parseNYTimes(self):
+    def parseNYTimes(self, csvfile):
         # TODO
         df = pd.DataFrame.from_csv('jsons/nytimes_restaurants.csv', index_col=None)
 
