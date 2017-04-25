@@ -18,7 +18,13 @@ class Matrixizer:
                                           max_features=5000, stop_words='english', norm='l2')
 
         #Making the tfidf matrix using our reviews data
-        self.matrix = self.vectorizer.fit_transform([listing.getReviews() for _, listings in listing_reviews.iteritems() for listing in listings])
+
+        try: 
+            self.matrix = self.vectorizer.fit_transform([listing.getReviews() for _, listings in listing_reviews.iteritems() for listing in listings])
+        except:
+            print("AHAJKJFDLK:JFLKADJFLK:DJGLKDJAFLK:JDA_-----------------------------------------")
+            print([listing.getReviews() for _, listings in listing_reviews.iteritems() for listing in listings])
+
 
         #dictionary that maps listings to their id in doc_by_vocab matrix
         i = 0
