@@ -1,23 +1,19 @@
-class Listing:
-
+class Review:
     """
-    self.id: id of this house
-    self.reviews:  the reviews of this listing
-    self.score: score for this listing
-    self.neighborhood: which neighborhood this listing is in
+    "parent" class
     """
 
-    def  __init__(self, listing_id, listing_reviews, neighborhood):
-        self.id = listing_id
-        self.reviews = listing_reviews
+    def __init__(self, doc_id, neighborhood, review):
+        self.id = doc_id
+        self.review = review
         self.neighborhood = neighborhood
         self.score = 0
 
     def getID(self):
         return self.id
 
-    def getReviews(self):
-        return self.reviews
+    def getReview(self):
+        return self.review
 
     def getNeighborhood(self):
         return self.neighborhood
@@ -27,3 +23,19 @@ class Listing:
 
     def getScore(self):
         return self.score
+
+
+class Listing(Review):
+
+    def __init__(self, doc_id, neighborhood, review):
+        Review.__init__(self, doc_id, neighborhood, review)
+
+
+class Restaurant(Review):
+
+    def __init__(self, doc_id, neighborhood, review, name):
+        Review.__init__(self, doc_id, neighborhood, review)
+        self.restaurant_name = name
+
+    def getName(self):
+        return self.restaurant_name

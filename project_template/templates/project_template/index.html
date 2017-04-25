@@ -5,6 +5,12 @@
         <link rel="stylesheet" href="/static/main.css">
         <script src="/static/javascript/jquery-3.1.1.min.js"></script>
         <script src="/static/javascript/main.js"></script> 
+        <script src="/static/javascript/bootstrap.min.js"></script> 
+        <script src="https://d3js.org/d3.v4.min.js"></script>
+        <script src="https://d3js.org/topojson.v1.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/queue-async/1.0.7/queue.min.js"></script>
+
+
     </head>
     
     <body class="fill">
@@ -19,57 +25,124 @@
         {% block javascript %}  
             <script>
                 $(document).ready(function(){
+                    var showOutput = false;
+                    $(".output").addClass("hidden");
                     $("#query-btn").on("click",function() {
                         var val = $(this).val();
-                        var form = $(this).closest("form");
+                    });
+                    
+                    $.ajax({
+                        type: "GET",
+                        url: "/",
+                        contentType: "application/json",
+                        dataType: "json",
+                        data: {
+                            search: "{{ search_params }}",
+                        },
+                        success: function(response) {
+
+                            if(response[0][0] === "Query: "){
+                                $(".output").addClass("hidden");
+                            } else {
+                                $(".output").removeClass("hidden");
+                                $("input").append("sup");
+                            }
+
+                            $(".user-query").append(response[0]);
+                            for (var i = 1 ; i < 10 ; i++) {
+                                var obj = response[i];
+                                $(".search-results").append("<p>" + i + ". <span class='neighborhood-name'>" + obj[0] + "</span>, " + obj[1] +"</p>");
+                            }
+
+                            d3.json("/static/map_data/newyork.json",function(data){
+                                drawMap(response,data);
+                            })
+
+                        },
+
+                        error: function(response) {
+                            console.log("error");
+                        }
                     });
                 });
 
-                $.ajax({
-                    type: "GET",
-                    url: "/",
-                    contentType: "application/json",
-                    dataType: "json",
-                    data: {
-                        search: "{{ search_params }}",
-                    },
-                    success: function(response) {
-                        console.log(response);
-                        for (let obj of response) {
-                            $(".output").append("<p>" + String(obj) + "</p>")
-                        }
-                        
+                function drawMap(data,ny) {
+                    var neighborhoods = [];
 
-                    },
-                    error: function(response) {
-                        console.log("error");
-                    }
-                });
+                    var margin = {top: 5, right: 5, bottom: 5, left: 5};
+                    var width = 600 - margin.left - margin.right,
+                        height = 500 - margin.top - margin.bottom;
+
+                    var nyfeatures = topojson.feature(ny,ny.objects.nyc)
+                    var svg = d3.select("#map")
+                        .append("svg")
+                          .attr("class", "map")
+                          .attr("width", width + margin.left + margin.right)
+                          .attr("height", height + margin.top + margin.bottom)
+                        .append("g")
+                        .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+                    var path = d3.geoPath()
+                        .projection(d3.geoAlbersUsa()
+                        .fitSize([width-margin.top, height-margin.top], nyfeatures));
+                    var nyPaths = svg.selectAll(".ny-neighborhoods")
+                        .data(nyfeatures.features)
+                        .enter().append("path")
+                            .attr("class", "ny-neighborhoods")
+                            .attr("d", function(d) { 
+                                neighborhoods.push(d.properties.NTAName);
+                                return path(d); 
+                                })
+                            .style("fill","white")
+
+                    console.log(neighborhoods);
+                }
+
+            
             </script>
         {% endblock %}
 
         {% block content %}
         
-            <form class="form-inline global-search" method='GET' data-url="{% url 'index' %}">
-                <h1> Find Your Home. </h1><br>
+            <form class="form-inline global-search col-md-12" method='GET' data-url="{% url 'index' %}">
+                <h1> CribHub. </h1><br>
                 <div class="blurb">
-                    <p>Separate criteria by commas. Query by city and what you desire in a neighborhood. <br> 
+                    <p>Query by city and what you desire in a neighborhood. Separate criteria by commas. <br> 
                     Example: "New York, young professionals, affordable, bars nearby"</p>
                 </div>
                 
                 <br><br>
                 
                 <div class="form-group">
-                    <input id="input" type="text" class="form-control" placeholder="Your Input">
+                    <input id="input" type="text" name="search" class="form-control" placeholder="Your Input">
                 </div>
                 <button id="query-btn" type="submit" class="btn btn-info"> Go </button>
+
             </form>
 
         {% endblock %}
 
-        <div class="output">
-            
+
+        <div class="col-md-12">
+            <div class="col-md-3"></div>
+            <div class="query-text col-md-6" style="margin-left:3%; margin-bottom:2%"> 
+                Find Results For: <span class="user-query"></span> 
+            </div>
+            <div class="col-md-3"></div>
         </div>
+
+        <div class="col-md-12">
+            <div class="col-md-3"></div>
+            <div class="output hidden col-md-4">
+                <div class="search-results"></div>
+            </div>
+            <!-- <div class="col-md-1"></div> -->
+            <div id="map" class="col-md-5" style="margin-top:-15%"></div>
+        </div>
+
+        <!-- <div class="col-md-1">hii</div>
+        
+        <div class="col-md-1"></div>
+        
         
         
         

@@ -18,7 +18,6 @@ def index(request):
     search = request.GET.get('search','')
     request_type = (request.META["HTTP_ACCEPT"].split(",")[0])
     if (request_type == "application/json"):
-        
         output = get_neighborhood_ranking(search)
         return JsonResponse(output, content_type="application/json", safe=False)
         
