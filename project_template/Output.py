@@ -15,28 +15,31 @@ class Output:
 
     # Get the combined score of all criteria in the query
     def getCombinedScores(self, criteria_dict):
-        #Handle Airbnb scores.
+        all_airbnb = defaultdict(list)
+        all_nytimes = defaultdict(list)
+
         for key in criteria_dict.keys():
+            #Handle Airbnb scores
             airbnb_scores = criteria_dict[key]["airbnb_scores"]
-            combined_airbnb = defaultdict(list)
             for score_dict in airbnb_scores:
                 for neighborhood, score in score_dict.itervalues():
-                    combined_airbnb[neighborhood].append(score)
-
-            for neighborhood, scores in combined_airbnb.itervalues():
-                combined_airbnb[neighborhood] = np.mean(scores)
+                    all_airbnb[neighborhood].append(score)
 
             #Handle NYTimes scores.
             nytimes_scores = criteria_dict[key]["nytimes_scores"]
-            combined_nytimes = defaultdict(list)
             for score_dict in nytimes_scores:
                 for neighborhood, score in score_dict.itervalues():
-                    combined_nytimes[neighborhood].append(score)
+                    all_nytimes[neighborhood].append(score)
 
-            for neighborhood, scores in combined_nytimes.itervalues():
+        # take mean of airbnb scores and of nytimes scores
+        combined_airbnb = {}
+        combined_nytimes = {}
+        for neighborhood, scores in all_airbnb.itervalues():
+                combined_airbnb[neighborhood] = np.mean(scores)
+        for neighborhood, scores in all_nytimes.itervalues():
                 combined_nytimes[neighborhood] = np.mean(scores)
 
-        #Combine results
+        #Combine airbnb and nytimes scores
         combined_results = {}
         for neighborhood in combined_airbnb.keys():
             if(neighborhood in combined_nytimes.keys()):
@@ -47,7 +50,7 @@ class Output:
     def getNaiveImpl(self, query):
         query_criteria = query.split(",")
         criteria_results = {}
-        
+
         for criteria in query_criteria:
             criteria_results[criteria] = {"airbnb_scores": [], "nytimes_scores": []}
             airbnb_scores = self.airbnb_matrix.query(criteria)
