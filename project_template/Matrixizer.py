@@ -14,6 +14,8 @@ class Matrixizer:
     """
 
     def __init__(self, listing_reviews):
+        print("LISTING REVIEWS -----------------")
+        print(listing_reviews)
         self.vectorizer = TfidfVectorizer(max_df=1.0, min_df=0.0,
                                           max_features=5000, stop_words='english', norm='l2')
 
@@ -22,7 +24,7 @@ class Matrixizer:
         try: 
             self.matrix = self.vectorizer.fit_transform([listing.getReviews() for _, listings in listing_reviews.iteritems() for listing in listings])
         except:
-            print("AHAJKJFDLK:JFLKADJFLK:DJGLKDJAFLK:JDA_-----------------------------------------")
+            print("-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------")
             print([listing.getReviews() for _, listings in listing_reviews.iteritems() for listing in listings])
 
 
