@@ -55,7 +55,7 @@ class Output:
 
     def getNaiveImpl(self, query):
         query_criteria = query.split(",")
-        query_criteria  = [ query.strip() for query in query_criteria]
+        query_criteria  = [q.strip() for q in query_criteria]
         criteria_results = {}
 
         for criteria in query_criteria:
