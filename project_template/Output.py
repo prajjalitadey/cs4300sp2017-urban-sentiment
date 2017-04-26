@@ -65,7 +65,6 @@ class Output:
             criteria_results[criteria]["airbnb_scores"].append(airbnb_scores)
             criteria_results[criteria]["nytimes_scores"].append(nytimes_scores)
             
-        combined_results = self.getCombinedScores(criteria_results)
         return_me = {}
         print('hello its me')
         print(criteria_results[criteria]['airbnb_scores'])
@@ -78,11 +77,12 @@ class Output:
                 else:
                     return_me[criteria][neighborhood] = criteria_results[criteria]['airbnb_scores'][0][neighborhood]        
 
+        combined_results = self.getCombinedScores(criteria_results)
         res = sorted(combined_results, key=combined_results.__getitem__, reverse=True)
         
         
         now_return_me = {}
-        now_return_me['All'] = [(neighborhood, return_me[criteria] [neighborhood]) for neighborhood in res]
+        now_return_me['All'] = [(neighborhood, combined_results[neighborhood]) for neighborhood in res]
         now_return_me['QUERY'] = [query]
         
         for criteria in query_criteria:
