@@ -44,17 +44,11 @@ class Output:
         #Combine airbnb and nytimes scores
         combined_results = {}
         for neighborhood in combined_airbnb.keys():
-            if(neighborhood.lower() in combined_nytimes.keys()):
-                combined_results[neighborhood.lower()] = np.mean([combined_airbnb[neighborhood], combined_nytimes[neighborhood]])
-                # print("TRUTH ~~~~~~~~~~~~~~~")
-                # print(combined_results[neighborhood])
-
-        print("AIRBNB NEIGHBORHOODS ~~~~~~~~~~~~~")
-        for n in sorted(combined_airbnb.keys()):
-            print(n)
-        print("NYTIMES NEIGHBORHOODS ~~~~~~~~~~~~~")
-        for n in sorted(combined_nytimes.keys()):
-            print(n)
+            neighborhood = neighborhood.lower()
+            if(neighborhood in combined_nytimes.keys()):
+                combined_results[neighborhood] = np.mean([combined_airbnb[neighborhood], combined_nytimes[neighborhood]])
+            else:
+                combined_results[neighborhood] = combined_airbnb[neighborhood]
 
         return combined_results
 
