@@ -83,7 +83,7 @@ class Output:
         
         now_return_me = {}
         now_return_me['All'] = [(neighborhood, return_me[criteria] [neighborhood]) for neighborhood in res]
-        now_return_me[query] = []
+        now_return_me['QUERY'] = [query]
         
         for criteria in query_criteria:
             res = sorted(return_me[criteria], key=return_me[criteria].__getitem__, reverse=True)
