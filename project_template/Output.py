@@ -46,6 +46,8 @@ class Output:
         for neighborhood in combined_airbnb.keys():
             if(neighborhood in combined_nytimes.keys()):
                 combined_results[neighborhood] = np.mean([combined_airbnb[neighborhood], combined_nytimes[neighborhood]])
+            else:
+                combined_results[neighborhood] = combined_airbnb[neighborhood]
 
         return combined_results
 
