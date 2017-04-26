@@ -37,15 +37,18 @@ class Output:
         combined_nytimes = {}
 
         for neighborhood, scores in all_airbnb.iteritems():
-                combined_airbnb[neighborhood] = np.mean(scores)
+                combined_airbnb[neighborhood.lower()] = np.mean(scores)
         for neighborhood, scores in all_nytimes.iteritems():
-                combined_nytimes[neighborhood] = np.mean(scores)
+                combined_nytimes[neighborhood.lower()] = np.mean(scores)
 
         #Combine airbnb and nytimes scores
         combined_results = {}
         for neighborhood in combined_airbnb.keys():
+            neighborhood = neighborhood.lower()
             if(neighborhood in combined_nytimes.keys()):
                 combined_results[neighborhood] = np.mean([combined_airbnb[neighborhood], combined_nytimes[neighborhood]])
+            else:
+                combined_results[neighborhood] = combined_airbnb[neighborhood]
 
         return combined_results
 
@@ -63,4 +66,5 @@ class Output:
         combined_results = self.getCombinedScores(criteria_results)
 
         res = sorted(combined_results, key=combined_results.__getitem__, reverse=True)
+        
         return [(neighborhood, combined_results[neighborhood]) for neighborhood in res]
