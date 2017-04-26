@@ -41,22 +41,56 @@
                         },
                         success: function(response) {
 
-                            if(response[0][0] === "Query: "){
+
+                            var resultsDict   = JSON.parse(response),
+                                defaultOutput = resultsDict["All"],
+                                queryText     = resultsDict["QUERY"][0]
+
+                            console.log(resultsDict);
+
+                            if(queryText === ""){
                                 $(".output").addClass("hidden");
+                                $(".query-text").addClass("hidden");
+                                $(".user-query").addClass("hidden");
                             } else {
                                 $(".output").removeClass("hidden");
-                                $("input").append("sup");
+                                $(".query-text").removeClass("hidden");
+                                $(".user-query").removeClass("hidden");
                             }
 
-                            $(".user-query").append(response[0]);
+                            /* Button UI */
+                            var queryCriteria = queryText.split(",")
+                                queryCriteria.push("All")
+                            for (let criteria of queryCriteria) {
+                                var spliced = (criteria.trim()).replace(/ /g, "-");
+                                $(".user-query").append("<span class='criteria' id='" + spliced +"'>" + criteria + "</span>");    
+                            }
+
+                            $("span.criteria#All").addClass("selected");
+
+                            $(".criteria").on("click", function(e){
+                                $(".criteria").removeClass("selected");
+                                e.preventDefault();
+                                $(this).addClass("selected");
+                                $(".search-results").empty();
+
+                                var chosenCriteria = ($(this).text()).trim();
+                                var outputList = resultsDict[chosenCriteria]
+                                for (var i = 1 ; i < 10 ; i++) {
+                                    var obj = outputList[i];
+                                    $(".search-results").append("<p>" + i + ". <span class='neighborhood-name'>" + obj[0] + "</span>, " + Number((parseFloat(obj[1])).toFixed(4)) +"</p>"); 
+                                }
+                            });
+
+                            /* Append output to div. */
                             for (var i = 1 ; i < 10 ; i++) {
-                                var obj = response[i];
-                                $(".search-results").append("<p>" + i + ". <span class='neighborhood-name'>" + obj[0] + "</span>, " + obj[1] +"</p>");
+                                var obj = defaultOutput[i];
+                                $(".search-results").append("<p>" + i + ". <span class='neighborhood-name'>" + obj[0] + "</span>, " + Number((parseFloat(obj[1])).toFixed(4)) +"</p>"); 
                             }
 
-                            d3.json("/static/map_data/newyork.json",function(data){
-                                drawMap(response,data);
-                            })
+                            // d3.json("/static/map_data/newyork.json",function(data){
+                            //     drawMap(response,data);
+                            // })
 
                         },
 
@@ -94,7 +128,6 @@
                                 })
                             .style("fill","white")
 
-                    console.log(neighborhoods);
                 }
 
             
@@ -124,27 +157,37 @@
 
         <div class="col-md-12">
             <div class="col-md-3"></div>
-            <div class="query-text col-md-6" style="margin-left:3%; margin-bottom:2%"> 
-                Find Results For: <span class="user-query"></span> 
-            </div>
+            <div class="col-md-6 query-text"> Find Results For: </div> 
             <div class="col-md-3"></div>
         </div>
 
         <div class="col-md-12">
             <div class="col-md-3"></div>
-            <div class="output hidden col-md-4">
-                <div class="search-results"></div>
-            </div>
-            <!-- <div class="col-md-1"></div> -->
-            <div id="map" class="col-md-5" style="margin-top:-15%"></div>
+            <div class="col-md-6 user-query"></div> 
+            <div class="col-md-3"></div>
         </div>
 
-        <!-- <div class="col-md-1">hii</div>
-        
-        <div class="col-md-1"></div>
+        <div class="col-md-12">
+            <div class="col-md-3"></div>
+            <div class="output hidden col-md-6">
+                <div class="search-results"></div>
+            </div> 
+            <div class="col-md-3"></div>
+        </div>
+
+
+
+        <!-- <div id="map" class="col-md-5" style="margin-top:-15%"></div> -->
         
         
         
         
     </body>
 </html>
+
+
+
+
+
+
+

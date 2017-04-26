@@ -37,12 +37,9 @@ def get_neighborhood_ranking(q):
 	nytimes = parser.getNYTimesReviews()
 	
 	output = Output(airbnb, nytimes)
-	tups = output.getNaiveImpl(query) #TODO -- CHANGE
-	# print("OUTPUT ----------------------")
-	# print(tups)
-	tmp = []
-	tmp.append([query])
-	for item in tups:
-		tmp.append(item)
+	results = output.getNaiveImpl(query) 
+	
+	d = results
+	jsonarray = json.dumps(d)
 
-	return tmp
+	return jsonarray

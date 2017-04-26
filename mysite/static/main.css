@@ -11,7 +11,7 @@ h1 {
 }
 @media (min-width:400px){
 .global-search {
-padding: 20px 0;
+padding: 10px 0;
 text-align:center;
 }
 body {
@@ -27,6 +27,42 @@ img {
 	text-align: left;
 	margin-top: 2%;
 	margin-bottom: -2%
+}
+.query-text {
+	margin-top:-1%;
+	margin-bottom:2%;
+}
+.user-query, .neighborhood-name {
+	margin-left:2%;
+	color: #cc5500;
+	margin-top:-1%;
+}
+.criteria {
+	border: solid 1.5px white;
+	padding:5px;
+	margin-left:1%;
+	margin-right:1
+	cursor:pointer;
+	padding-right:9px;
+	width:100%;
+	text-align: center
+}
+.criteria:hover{
+	border: solid 2px #36454f;
+	cursor:pointer;
+}
+#all-criteria {
+	width:100%;
+	border: solid 1.5px #36454f;
+	padding:5px;
+	padding-right:10px;
+	margin-left:1%;
+	margin-right:1%;
+	cursor:pointer;
+	text-align: center
+}
+.selected {
+	border: solid 2px #36454f;
 }
 .global-search {
 text-align:center;
@@ -59,24 +95,24 @@ color: #4285F4;
 .query-text {
 	/*margin-left:28.7%;
 	margin-bottom:1%;*/
+	margin-left:2%;
 	font-family: Raleway;
 	font-weight: 700;
-}
-.user-query, .neighborhood-name {
-	color: #cc5500;
 }
 .hidden {
 	visibility: hidden;
 }
 .search-results {
-	/*margin-top: 1%;
+	/*margin-top: 2%;
 	margin-left: 3%;*/
+	padding:5px;
+
 }
 .output {
     width:350px;
 	height:300px;
-	/*margin-left:28.7%;*/
-	/*margin-left:5%;*/
+	margin-top:3%;
+	margin-left:10%;
 	float:left;
 	border-radius: 6px;
 	padding: 1%;
