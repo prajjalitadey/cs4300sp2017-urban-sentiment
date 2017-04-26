@@ -38,6 +38,8 @@ def get_neighborhood_ranking(q):
 	
 	output = Output(airbnb, nytimes)
 	tups = output.getNaiveImpl(query) #TODO -- CHANGE
+	# print("OUTPUT ----------------------")
+	# print(tups)
 	tmp = []
 	tmp.append([query])
 	for item in tups:

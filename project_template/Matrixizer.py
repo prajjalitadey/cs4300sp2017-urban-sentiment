@@ -36,7 +36,6 @@ class Matrixizer:
                 score += self.matrix.getrow(listing).dot(query_tfidf)[0]
             score = float(score) / len(self.dict_neighborhoods[neighborhood])
             neighborhood_to_score[neighborhood] = score
-            print(score)
         return neighborhood_to_score
 
     def bernoulli_bayes(self, test):
