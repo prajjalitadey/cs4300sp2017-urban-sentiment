@@ -23,7 +23,6 @@ class Output:
             airbnb_scores = criteria_dict[key]["airbnb_scores"]
             # airbnb scores is a list of score_dicts
             for score_dict in airbnb_scores:
-                # print(score_dict)
                 for neighborhood, score in score_dict.iteritems():
                     all_airbnb[neighborhood].append(score)
 
