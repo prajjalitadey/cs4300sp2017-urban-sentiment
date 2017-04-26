@@ -21,22 +21,24 @@ class Output:
         for key in criteria_dict.keys():
             #Handle Airbnb scores
             airbnb_scores = criteria_dict[key]["airbnb_scores"]
+            # airbnb scores is a list of score_dicts
             for score_dict in airbnb_scores:
-                for neighborhood, score in score_dict.itervalues():
+                # print(score_dict)
+                for neighborhood, score in score_dict.iteritems():
                     all_airbnb[neighborhood].append(score)
 
             #Handle NYTimes scores.
             nytimes_scores = criteria_dict[key]["nytimes_scores"]
             for score_dict in nytimes_scores:
-                for neighborhood, score in score_dict.itervalues():
+                for neighborhood, score in score_dict.iteritems():
                     all_nytimes[neighborhood].append(score)
 
         # take mean of airbnb scores and of nytimes scores
         combined_airbnb = {}
         combined_nytimes = {}
-        for neighborhood, scores in all_airbnb.itervalues():
+        for neighborhood, scores in all_airbnb.iteritems():
                 combined_airbnb[neighborhood] = np.mean(scores)
-        for neighborhood, scores in all_nytimes.itervalues():
+        for neighborhood, scores in all_nytimes.iteritems():
                 combined_nytimes[neighborhood] = np.mean(scores)
 
         #Combine airbnb and nytimes scores
