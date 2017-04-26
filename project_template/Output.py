@@ -55,6 +55,7 @@ class Output:
 
     def getNaiveImpl(self, query):
         query_criteria = query.split(",")
+        query_criteria  = [ query.strip() for query in query_criteria]
         criteria_results = {}
 
         for criteria in query_criteria:
@@ -80,9 +81,10 @@ class Output:
         res = sorted(combined_results, key=combined_results.__getitem__, reverse=True)
         
         
-        return_me['All'] = [(neighborhood, return_me[criteria] [neighborhood]) for neighborhood in res]
-
         now_return_me = {}
+        now_return_me['All'] = [(neighborhood, return_me[criteria] [neighborhood]) for neighborhood in res]
+        now_return_me[query] = []
+        
         for criteria in query_criteria:
             res = sorted(return_me[criteria], key=return_me[criteria].__getitem__, reverse=True)
             now_return_me[criteria] =  [(neighborhood, return_me[criteria] [neighborhood]) for neighborhood in res]
