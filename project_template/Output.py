@@ -1,5 +1,4 @@
 from Matrixizer import Matrixizer
-from Parser import Parser
 import numpy as np
 
 from collections import defaultdict
@@ -64,7 +63,7 @@ class Output:
             nytimes_scores = self.nytimes_matrix.query(criteria)
             criteria_results[criteria]["airbnb_scores"].append(airbnb_scores)
             criteria_results[criteria]["nytimes_scores"].append(nytimes_scores)
-            
+
         return_me = {}
         print('hello its me')
         print(criteria_results[criteria]['airbnb_scores'])
@@ -75,20 +74,18 @@ class Output:
                     return_me[criteria][neighborhood] = np.mean(criteria_results[criteria]['airbnb_scores'][0][neighborhood],
                                                                       criteria_results[criteria]['nytimes_scores'][0][neighborhood])
                 else:
-                    return_me[criteria][neighborhood] = criteria_results[criteria]['airbnb_scores'][0][neighborhood]        
+                    return_me[criteria][neighborhood] = criteria_results[criteria]['airbnb_scores'][0][neighborhood]
 
         combined_results = self.getCombinedScores(criteria_results)
         res = sorted(combined_results, key=combined_results.__getitem__, reverse=True)
-        
-        
+
+
         now_return_me = {}
         now_return_me['All'] = [(neighborhood, combined_results[neighborhood]) for neighborhood in res]
         now_return_me['QUERY'] = [query]
-        
+
         for criteria in query_criteria:
             res = sorted(return_me[criteria], key=return_me[criteria].__getitem__, reverse=True)
             now_return_me[criteria] =  [(neighborhood, return_me[criteria] [neighborhood]) for neighborhood in res]
-            
-        print now_return_me
-        
+
         return now_return_me
