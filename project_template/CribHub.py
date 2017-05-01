@@ -114,7 +114,7 @@ class CribHub:
         self.nytimes_id_to_neighborhood = json.load(file, encoding='utf8')
 
         ###TOPIC MODELING###
-    
+
         # Matrix for Topic Modeling
         file = urllib2.urlopen('https://s3.amazonaws.com/cribble0108/topic_matrix.json')
         self.topic_matrix = json.load(file, object_hook=json_numpy_obj_hook, encoding='utf8')
@@ -124,7 +124,7 @@ class CribHub:
         # Maps the topic to the neighborhoods associated with that topic
         file = urllib2.urlopen('https://s3.amazonaws.com/cribble0108/topic_to_neighborhood.json')
         self.topic_to_neighborhoods = json.load(file, encoding='utf8')
-        
+
         #######DATABASES#######
         params = config()
         self.conn = psycopg2.connect(**params)
@@ -244,9 +244,11 @@ class CribHub:
             nbhd_scores_list = sorted([[nbhd, score] for nbhd, score in scores.iteritems()], key=lambda x: x[1], reverse=True)
             neighborhood_ranking[criteria] = nbhd_scores_list
 
-            # get all listing scores
+            # # get all listing scores
             query_svd = self.get_query_svd(criteria, self.airbnb_word_to_index, self.airbnb_idf_values, self.airbnb_words_compressed)
-            for lid, text in self.airbnb_lid_to_text.iteritems():# look at this structure for duplicates i.e. .items()
+            listing_ids = self.airbnb_id_to_idx.keys()
+            listing_text = self.get_text(listing_ids)
+            for lid, text in listing_text:
                 listing_score = self.get_listing_score(query_svd, lid)
                 listing_ranking[criteria].append([lid, listing_score, text])
             listing_ranking[criteria] = sorted(listing_ranking[criteria], key=lambda x: x[1], reverse=True)
@@ -256,7 +258,7 @@ class CribHub:
             for rid, text in self.nytimes_id_to_review.iteritems():
                 review_score = self.get_review_score(query_svd, rid)
                 review_ranking[criteria].append([rid, review_score, text])
-            
+            review_ranking[criteria] = sorted(listing_ranking[criteria], key=lambda x: x[1], reverse=True)
 
         return {'neighborhood_ranking': neighborhood_ranking, 'listing_ranking': listing_ranking, 'review_ranking': review_ranking, 'query': query}
 
@@ -300,18 +302,18 @@ class CribHub:
                     weight[...] = 0
 
         return self.handle_query(q_mod)
-    
-        # Returns nothing if word is not found in topic model
-   
+
+
+    # Returns nothing if word is not found in topic model
     def topic_modeling(self, query):
         query_words = query.split(" ")
-        indexes = [word_to_top_index[q] for q in query_words if q in word_to_top_index]
-        
+        indexes = [self.word_to_top_index[q] for q in query_words if q in self.word_to_top_index]
+
         #Adding all the query words together
         vec = np.zeroes(10)
         for topic in indexes:
-            vec += topic_matrix[:, indexes]
-       
+            vec += self.topic_matrix[:, indexes]
+
         #Checking if all values in vector are same if so we retun None
         usetopic = False
         value = vec[0]
@@ -320,7 +322,7 @@ class CribHub:
                 usetopic = True
         if usetopic:
             topic = np.argmax(vec)
-            return topic_to_neighborhoods[topic]
+            return self.topic_to_neighborhoods[topic]
         else:
             return None
 
@@ -330,10 +332,10 @@ class CribHub:
     # Output: dictionary
     # Output structure: {'probability':{u'neg':0.0222, u'neutral':0.1134, u'pos':0.7183}, u'label':u'pos'}
     def get_sentiment(self, content):
-        r = requests.post("http://text-processing.com/api/sentiment/", {"text":content})
+        r = requests.post("http://text-processing.com/api/sentiment/", {"text": content})
         results = json.loads(r.text)
         return results
-    
+
     # Put in a list of listing_ids you want to get text for
     # Gets out a list of tuples of form [(listing_id, review)]
     def get_text(self, listing_ids):
@@ -352,6 +354,6 @@ if __name__ == '__main__':
 #     query = "port authority"
 
     cribhub = CribHub()
-#     print ("AWS Loaded")
+    # print ("AWS Loaded")
 #     m = cribhub.handle_query(query)
     print(cribhub.get_text([2515]))
