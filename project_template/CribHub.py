@@ -131,10 +131,10 @@ class CribHub:
 
         for word in re.sub("[^\w]", " ", query).split():
             # should take into account words that don't exist in dictionary, maybe by smoothing
+            word = word.replace(",", "")
             if word in word_to_index.keys():
                 word_idx = word_to_index[word]  # word index
                 query_tfidf[word_idx] = 1.0 * idf_values[word_idx]  # set that word to 1 times its idf value
-
         words_transpose = words_compressed.T
         query_tfidf_T = np.matrix(query_tfidf).T
         query_svd = words_transpose * query_tfidf_T  # convert to svd form
@@ -183,8 +183,8 @@ class CribHub:
 
 
     def combine_scores(self, airbnb_scores, nytimes_scores):
-        a = 0.5
-        b = 0.5
+        a = 0.8
+        b = 0.2
 
         airbnb = set(airbnb_scores.keys())
         nytimes = set(nytimes_scores.keys())
@@ -237,23 +237,68 @@ class CribHub:
 
 
 
-    def rocchio(self, q, relevant, irrelevant, a=.3, b=.3, c=.8, clip=True):
-        relevant_avg_tfidf = np.zeros(len(q))
-        irrelevant_avg_tfidf = np.zeros(len(q))
-        q_tfidf = self.airbnb_vectorizer.transform(q)
+    def rocchio(self, q, airbnb_relevant_ids, airbnb_irrelevant_ids, nytimes_relevant_ids, nytimes_irrelevant_ids, a=.7, b=.5, c=.5, clip=True):
+        avg_rel_airbnb = np.zeros(len(airbnb_idf_values))
+        avg_irrel_airbnb = np.zeros(len(airbnb_idf_values))
 
-        for relevant_doc in relevant:
-            relevant_tfidf = self.airbnb_vectorizer.transform(relevant_doc)
-            relevant_avg_tfidf += relevant_tfidf
-        relevant_avg_tfidf = relevant_avg_tfidf/len(relevant)
+        for airbnb_id in airbnb_relevant_ids:
+            rel_airbnb_idx = self.airbnb_id_to_idx[airbnb_id]
+            avg_rel_airbnb += self.airbnb_tfidf_svd[rel_airbnb_idx]
+        avg_rel_airbnb/= len(airbnb_relevant_ids)
 
-        for irrelevant_doc in irrelevant:
-            irrelevant_tfidf = self.airbnb_vectorizer.transform(irrelevant_doc)
-            irrelevant_avg_tfidf += irrelevant_tfidf
-        irrelevant_avg_tfidf = irrelevant_avg_tfidf/len(irrelevant)
+        for airbnb_id in airbnb_irrelevant_ids:
+            irrel_airbnb_idx = self.airbnb_id_to_idx[airbnb_id]
+            avg_irrel_airbnb += self.airbnb_tfidf_svd[irrel_airbnb_idx]
+        avg_irrel_airbnb /= len(airbnb_irrelevant_ids)
 
-        q_new = c*q_tfidf+a*relevant_avg_tfidf-b*irrelevant_avg_tfidf
-        return q_new
+
+        avg_rel_nytimes = np.zeros(len(nytimes_idf_values))
+        avg_irrel_nytimes = np.zeros(len(nytimes_idf_values))
+
+        for nytimes_id in nytimes_relevant_ids:
+            rel_nytimes_idx = self.nytimes_id_to_idx[nytimes_id]
+            avg_rel_nytimes += self.nytimes_tfidf_svd[rel_nytimes_idx]
+        avg_rel_nytimes /= len(nytimes_relevant_ids)
+
+        for nytimes_id in nytimes_irrelevant_ids:
+            irrel_nytimes_idx = self.nytimes_id_to_idx[nytimes_id]
+            avg_irrel_nytimes += self.nytimes_tfidf_svd[irrel_nytimes_idx]
+        avg_irrel_nytimes /= len(nytimes_irrelevant_ids)
+
+        airbnb_wt = 0.8
+        nytimes_wt = 0.2
+
+        rel_avg = airbnb_wt*avg_rel_airbnb + nytimes_wt*avg_rel_nytimes
+        irrel_avg = airbnb_wt*avg_irrel_airbnb + nytimes_wt*avg_irrel_nytimes
+
+        q_new = a*q + b*rel_avg - c*irrel_avg
+
+        return self.handle_query(q_new)
+
+
+
+
+
+
+
+        #     rel_airbnb_idx= airbnb_id_to_idx[relevant_id]
+        #     relevant_svd=airbnb_tfidf_svd[rel_airbnb_idx]
+        #     irrel_airbnb_idx=airbnb_id_to_idx[irrelevant_id]
+        #     irrelevant_svd=airbnb_tfidf_svd[irrel_airbnb_idx]
+
+
+        # for relevant_doc in relevant:
+        #     relevant_tfidf = self.airbnb_vectorizer.transform(relevant_doc)
+        #     relevant_avg_tfidf += relevant_tfidf
+        # relevant_avg_tfidf = relevant_avg_tfidf/len(relevant)
+
+        # for irrelevant_doc in irrelevant:
+        #     irrelevant_tfidf = self.airbnb_vectorizer.transform(irrelevant_doc)
+        #     irrelevant_avg_tfidf += irrelevant_tfidf
+        # irrelevant_avg_tfidf = irrelevant_avg_tfidf/len(irrelevant)
+
+        # q_new = c*q_tfidf+a*relevant_avg_tfidf-b*irrelevant_avg_tfidf
+        # return q_new
 
 
 if __name__ == '__main__':
