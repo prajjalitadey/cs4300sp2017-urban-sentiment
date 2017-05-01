@@ -10,3 +10,4 @@ bs4
 numpy
 scikit-learn
 scipy
+configparser
