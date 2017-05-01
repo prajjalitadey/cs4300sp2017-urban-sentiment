@@ -95,8 +95,8 @@ class CribHub:
         # file = urllib2.urlopen('https://s3.amazonaws.com/cribble0108/nyt_nbhd_to_review.json')
         # self.nytimes_nbhd_to_review = json.load(file, encoding='utf8')
         #listing_id to neighborhood
-        # file = urllib2.urlopen('https://s3.amazonaws.com/cribble0108/nyt_id_to_review.json')
-        # self.nytimes_id_to_review = json.load(file, encoding='utf8')
+        file = urllib2.urlopen('https://s3.amazonaws.com/cribble0108/nyt_id_to_review.json')
+        self.nytimes_id_to_review = json.load(file, encoding='utf8')
         #Airbnb listing_id to index in matrix
         file = urllib2.urlopen('https://s3.amazonaws.com/cribble0108/nyt_id_to_idx.json')
         self.nytimes_id_to_idx = json.load(file, encoding='utf8')
@@ -218,8 +218,10 @@ class CribHub:
 
         neighborhood_ranking = {}
         listing_ranking = defaultdict(list)
+        review_ranking = defaultdict(list)
 
         for criteria in query_criteria:
+
             # get neighborhood score
             scores = self.combine_scores(self.score_airbnb_neighborhoods(criteria), self.score_nytimes_neighborhoods(criteria))
             nbhd_scores_list = sorted([[nbhd, score] for nbhd, score in scores.iteritems()], key=lambda x: x[1], reverse=True)
@@ -227,13 +229,19 @@ class CribHub:
 
             # get all listing scores
             query_svd = self.get_query_svd(criteria, self.airbnb_word_to_index, self.airbnb_idf_values, self.airbnb_words_compressed)
-            for lid, text in self.airbnb_lid_to_text.iteritems():
+            for lid, text in self.airbnb_lid_to_text.iteritems():# look at this structure for duplicates i.e. .items()
                 listing_score = self.get_listing_score(query_svd, lid)
                 listing_ranking[criteria].append([lid, listing_score, text])
-
             listing_ranking[criteria] = sorted(listing_ranking[criteria], key=lambda x: x[1], reverse=True)
 
-        return {'neighborhood_ranking': neighborhood_ranking, 'listing_ranking': listing_ranking, 'query': query}
+            # get all review scores
+            query_svd = self.get_query_svd(query, self.nytimes_word_to_index, self.nytimes_idf_values, self.nytimes_words_compressed)
+            for rid, text in self.nytimes_id_to_review.iteritems():
+                review_score = self.get_review_score(query_svd, rid)
+                review_ranking[criteria].append([rid, review_score, text])
+            
+
+        return {'neighborhood_ranking': neighborhood_ranking, 'listing_ranking': listing_ranking, 'review_ranking': review_ranking, 'query': query}
 
 
 
