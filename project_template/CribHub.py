@@ -331,12 +331,13 @@ class CribHub:
     def get_text(self, listing_ids):
         """ query parts from the parts table """
         try:
-            self.cur.execute("SELECT * FROM listingid_to_text WHERE listing_id IN (%s)", listing_ids)
+            placeholders = ", ".join(str(lid) for lid in listing_ids)
+            query = "SELECT * FROM listingid_to_text WHERE listing_id IN (%s)" % placeholders
+            self.cur.execute(query)
             rows = self.cur.fetchall()
             return rows
         except (Exception, psycopg2.DatabaseError) as error:
             print(error)
-
 
 
 if __name__ == '__main__':
