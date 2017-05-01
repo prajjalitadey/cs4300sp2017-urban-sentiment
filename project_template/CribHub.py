@@ -250,16 +250,43 @@ class CribHub:
         airbnb_wt = 0.8
         nytimes_wt = 0.2
 
-<<<<<<< HEAD
+        """
         rel_avg = airbnb_wt*avg_rel_airbnb + nytimes_wt*avg_rel_nytimes
         irrel_avg = airbnb_wt*avg_irrel_airbnb + nytimes_wt*avg_irrel_nytimes
 
         q_new = a*q + b*rel_avg - c*irrel_avg
 
         return self.handle_query(q_new)
+        """
 
+        #     rel_airbnb_idx= airbnb_id_to_idx[relevant_id]
+        #     relevant_svd=airbnb_tfidf_svd[rel_airbnb_idx]
+        #     irrel_airbnb_idx=airbnb_id_to_idx[irrelevant_id]
+        #     irrelevant_svd=airbnb_tfidf_svd[irrel_airbnb_idx]
+        airbnb_rel_vecs = [self.airbnb_tfidf_svd[self.airbnb_id_to_idx[aid]] for aid in airbnb_rel]
+        airbnb_rel_avg = np.array(airbnb_rel_vecs).mean(0)
+        airbnb_irr_vecs = [self.airbnb_tfidf_svd[self.airbnb_id_to_idx[aid]] for aid in airbnb_irr]
+        airbnb_irr_avg = np.array(airbnb_irr_vecs).mean(0)
+        nytimes_rel_vecs = [self.nytimes_tfidf_svd[self.nytimes_id_to_idx[nid]] for nid in nytimes_rel]
+        nytimes_rel_avg = np.array(nytimes_rel_vecs).mean(0)
+        nytimes_irr_vecs = [self.nytimes_tfidf_svd[self.nytimes_id_to_idx[nid]] for nid in nytimes_irr]
+        nytimes_irr_avg = np.array(nytimes_irr_vecs).mean(0)
 
-    # Returns nothing if word is not found in topic model
+        rel_avg = airbnb_wt*airbnb_rel_avg + nytimes_wt*nytimes_rel_avg
+        irrel_avg = airbnb_wt*airbnb_irr_avg + nytimes_wt*nytimes_irr_avg
+
+        query_vec = self.get_query_svd(q, self.airbnb_word_to_index, self.airbnb_idf_values, self.airbnb_words_compressed)
+        q_mod = a*query_vec + b*rel_avg - c*irrel_avg
+
+        if clip:
+            for weight in np.nditer(q_mod, op_flags=['readwrite']):
+                if weight < 0:
+                    weight[...] = 0
+
+        return self.handle_query(q_mod)
+    
+        # Returns nothing if word is not found in topic model
+   
     def topic_modeling(self, query):
         query_words = query.split(" ")
         indexes = [word_to_top_index[q] for q in query_words if q in word_to_top_index]
@@ -281,34 +308,6 @@ class CribHub:
         else:
             return None
 
-
-        #     rel_airbnb_idx= airbnb_id_to_idx[relevant_id]
-        #     relevant_svd=airbnb_tfidf_svd[rel_airbnb_idx]
-        #     irrel_airbnb_idx=airbnb_id_to_idx[irrelevant_id]
-        #     irrelevant_svd=airbnb_tfidf_svd[irrel_airbnb_idx]
-=======
-        airbnb_rel_vecs = [self.airbnb_tfidf_svd[self.airbnb_id_to_idx[aid]] for aid in airbnb_rel]
-        airbnb_rel_avg = np.array(airbnb_rel_vecs).mean(0)
-        airbnb_irr_vecs = [self.airbnb_tfidf_svd[self.airbnb_id_to_idx[aid]] for aid in airbnb_irr]
-        airbnb_irr_avg = np.array(airbnb_irr_vecs).mean(0)
-        nytimes_rel_vecs = [self.nytimes_tfidf_svd[self.nytimes_id_to_idx[nid]] for nid in nytimes_rel]
-        nytimes_rel_avg = np.array(nytimes_rel_vecs).mean(0)
-        nytimes_irr_vecs = [self.nytimes_tfidf_svd[self.nytimes_id_to_idx[nid]] for nid in nytimes_irr]
-        nytimes_irr_avg = np.array(nytimes_irr_vecs).mean(0)
->>>>>>> b2f5c3a21caa0cab2c96e09518faa2decd5ba0d1
-
-        rel_avg = airbnb_wt*airbnb_rel_avg + nytimes_wt*nytimes_rel_avg
-        irrel_avg = airbnb_wt*airbnb_irr_avg + nytimes_wt*nytimes_irr_avg
-
-        query_vec = self.get_query_svd(q, self.airbnb_word_to_index, self.airbnb_idf_values, self.airbnb_words_compressed)
-        q_mod = a*query_vec + b*rel_avg - c*irrel_avg
-
-        if clip:
-            for weight in np.nditer(q_mod, op_flags=['readwrite']):
-                if weight < 0:
-                    weight[...] = 0
-
-        return self.handle_query(q_mod)
 
 
 # if __name__ == '__main__':
