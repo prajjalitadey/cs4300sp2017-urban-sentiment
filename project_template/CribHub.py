@@ -309,6 +309,16 @@ class CribHub:
             return None
 
 
+    # Returns sentiment from Lillian Lee's text-processing API: http://text-processing.com/docs/sentiment.html
+    # Input: text string
+    # Output: dictionary
+    # Output structure: {'probability':{u'neg':0.0222, u'neutral':0.1134, u'pos':0.7183}, u'label':u'pos'}
+    def get_sentiment(content):
+        r = requests.post("http://text-processing.com/api/sentiment/", {"text":content})
+        results = json.loads(r.text)
+        return results
+
+
 
 # if __name__ == '__main__':
 #     query = "port authority"
