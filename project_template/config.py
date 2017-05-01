@@ -5,9 +5,14 @@ from configparser import ConfigParser
 def config(filename='database.ini', section='postgresql'):
     # create a parser
     parser = ConfigParser()
-    # read config file
-    parser.read(filename)
- 
+    parser[u'postgresql'] = {'host':'cribhubdb.c7bhn1c0aibh.us-east-2.rds.amazonaws.com',
+                      'database':'cribhubdb',
+                      'user':'cribhub',
+                      'password':'cs4300project'}
+    # read config file actually not working so don't do it
+    #parser.read(filename)
+    #print(parser.sections())
+    #print(parser.has_section(section))
     # get section, default to postgresql
     db = {}
     if parser.has_section(section):
