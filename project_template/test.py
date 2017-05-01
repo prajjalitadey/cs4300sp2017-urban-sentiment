@@ -28,20 +28,15 @@ def find_similar(q):
     return sorted(result, key=lambda tup: tup[0])
 
 
-def get_neighborhood_ranking(q):
-    query = q
-
-    # parser = Parser()
-    # parser.parseAirbnb("./jsons/test.csv")
-    # parser.parseNYTimes("./jsons/nytimes_restaurants.csv")
-    # airbnb = parser.getAirbnbReviews()
-    # nytimes = parser.getNYTimesReviews()
-
-    # output = Output(airbnb, nytimes)
-    # results = output.getNaiveImpl(query)
-
+def original_query(q):
     inst = CribHub()
-    d = inst.handle_query(query)
+    d = inst.handle_query(q)
     jsonarray = json.dumps(d)
+    return jsonarray
 
+
+def requery(q):
+    inst = CribHub()
+    d = inst.rocchio(q)
+    jsonarray = json.dumps(d)
     return jsonarray

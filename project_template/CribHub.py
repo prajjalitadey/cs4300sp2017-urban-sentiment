@@ -78,7 +78,7 @@ class CribHub:
         self.airbnb_idf_values = json.load(file, object_hook=json_numpy_obj_hook, encoding='utf8')
         #listing_id to listing dict
         file = urllib2.urlopen('https://s3.amazonaws.com/cribble0108/airbnb_listing_id_to_listing.json')
-        self.airbnb_lid_to_text = json.load(file, object_hook=json_numpy_obj_hook, encoding='utf8')
+        self.airbnb_lid_to_text = json.load(file, encoding='utf8')
 
 
 
@@ -108,7 +108,7 @@ class CribHub:
         self.nytimes_idf_values = json.load(file, object_hook=json_numpy_obj_hook, encoding='utf8')
         # NYT id to neighborhood dictionary
         file = urllib2.urlopen('https://s3.amazonaws.com/cribble0108/nyt_id_to_neighborhood.json')
-        self.nytimes_id_to_neighborhood = json.load(file, object_hook=json_numpy_obj_hook, encoding='utf8')
+        self.nytimes_id_to_neighborhood = json.load(file, encoding='utf8')
 
         ###TOPIC MODELING###
     
@@ -246,37 +246,11 @@ class CribHub:
 
 
 
-    def rocchio(self, q, airbnb_relevant_ids, airbnb_irrelevant_ids, nytimes_relevant_ids, nytimes_irrelevant_ids, a=.7, b=.5, c=.5, clip=True):
-        avg_rel_airbnb = np.zeros(len(airbnb_idf_values))
-        avg_irrel_airbnb = np.zeros(len(airbnb_idf_values))
-
-        for airbnb_id in airbnb_relevant_ids:
-            rel_airbnb_idx = self.airbnb_id_to_idx[airbnb_id]
-            avg_rel_airbnb += self.airbnb_tfidf_svd[rel_airbnb_idx]
-        avg_rel_airbnb/= len(airbnb_relevant_ids)
-
-        for airbnb_id in airbnb_irrelevant_ids:
-            irrel_airbnb_idx = self.airbnb_id_to_idx[airbnb_id]
-            avg_irrel_airbnb += self.airbnb_tfidf_svd[irrel_airbnb_idx]
-        avg_irrel_airbnb /= len(airbnb_irrelevant_ids)
-
-
-        avg_rel_nytimes = np.zeros(len(nytimes_idf_values))
-        avg_irrel_nytimes = np.zeros(len(nytimes_idf_values))
-
-        for nytimes_id in nytimes_relevant_ids:
-            rel_nytimes_idx = self.nytimes_id_to_idx[nytimes_id]
-            avg_rel_nytimes += self.nytimes_tfidf_svd[rel_nytimes_idx]
-        avg_rel_nytimes /= len(nytimes_relevant_ids)
-
-        for nytimes_id in nytimes_irrelevant_ids:
-            irrel_nytimes_idx = self.nytimes_id_to_idx[nytimes_id]
-            avg_irrel_nytimes += self.nytimes_tfidf_svd[irrel_nytimes_idx]
-        avg_irrel_nytimes /= len(nytimes_irrelevant_ids)
-
+    def rocchio(self, q, airbnb_rel, airbnb_irr, nytimes_rel, nytimes_irr, a=.7, b=.5, c=.5, clip=True):
         airbnb_wt = 0.8
         nytimes_wt = 0.2
 
+<<<<<<< HEAD
         rel_avg = airbnb_wt*avg_rel_airbnb + nytimes_wt*avg_rel_nytimes
         irrel_avg = airbnb_wt*avg_irrel_airbnb + nytimes_wt*avg_irrel_nytimes
 
@@ -312,24 +286,34 @@ class CribHub:
         #     relevant_svd=airbnb_tfidf_svd[rel_airbnb_idx]
         #     irrel_airbnb_idx=airbnb_id_to_idx[irrelevant_id]
         #     irrelevant_svd=airbnb_tfidf_svd[irrel_airbnb_idx]
+=======
+        airbnb_rel_vecs = [self.airbnb_tfidf_svd[self.airbnb_id_to_idx[aid]] for aid in airbnb_rel]
+        airbnb_rel_avg = np.array(airbnb_rel_vecs).mean(0)
+        airbnb_irr_vecs = [self.airbnb_tfidf_svd[self.airbnb_id_to_idx[aid]] for aid in airbnb_irr]
+        airbnb_irr_avg = np.array(airbnb_irr_vecs).mean(0)
+        nytimes_rel_vecs = [self.nytimes_tfidf_svd[self.nytimes_id_to_idx[nid]] for nid in nytimes_rel]
+        nytimes_rel_avg = np.array(nytimes_rel_vecs).mean(0)
+        nytimes_irr_vecs = [self.nytimes_tfidf_svd[self.nytimes_id_to_idx[nid]] for nid in nytimes_irr]
+        nytimes_irr_avg = np.array(nytimes_irr_vecs).mean(0)
+>>>>>>> b2f5c3a21caa0cab2c96e09518faa2decd5ba0d1
+
+        rel_avg = airbnb_wt*airbnb_rel_avg + nytimes_wt*nytimes_rel_avg
+        irrel_avg = airbnb_wt*airbnb_irr_avg + nytimes_wt*nytimes_irr_avg
+
+        query_vec = self.get_query_svd(q, self.airbnb_word_to_index, self.airbnb_idf_values, self.airbnb_words_compressed)
+        q_mod = a*query_vec + b*rel_avg - c*irrel_avg
+
+        if clip:
+            for weight in np.nditer(q_mod, op_flags=['readwrite']):
+                if weight < 0:
+                    weight[...] = 0
+
+        return self.handle_query(q_mod)
 
 
-        # for relevant_doc in relevant:
-        #     relevant_tfidf = self.airbnb_vectorizer.transform(relevant_doc)
-        #     relevant_avg_tfidf += relevant_tfidf
-        # relevant_avg_tfidf = relevant_avg_tfidf/len(relevant)
+# if __name__ == '__main__':
+#     query = "port authority"
 
-        # for irrelevant_doc in irrelevant:
-        #     irrelevant_tfidf = self.airbnb_vectorizer.transform(irrelevant_doc)
-        #     irrelevant_avg_tfidf += irrelevant_tfidf
-        # irrelevant_avg_tfidf = irrelevant_avg_tfidf/len(irrelevant)
-
-        # q_new = c*q_tfidf+a*relevant_avg_tfidf-b*irrelevant_avg_tfidf
-        # return q_new
-
-
-if __name__ == '__main__':
-    query = "port authority"
-
-    cribhub = CribHub()
-    m = cribhub.handle_query(query)
+#     cribhub = CribHub()
+#     print ("AWS Loaded")
+#     m = cribhub.handle_query(query)
