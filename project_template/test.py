@@ -5,6 +5,7 @@ from Parser import Parser
 from Output import Output
 from CribHub import CribHub
 
+inst = CribHub()
 
 def read_file(n):
     path = Docs.objects.get(id=n).address
@@ -29,14 +30,12 @@ def find_similar(q):
 
 
 def original_query(q):
-    inst = CribHub()
     d = inst.handle_query(q)
     jsonarray = json.dumps(d)
     return jsonarray
 
 
 def requery(q):
-    inst = CribHub()
     d = inst.rocchio(q)
     jsonarray = json.dumps(d)
     return jsonarray
