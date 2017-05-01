@@ -3,6 +3,7 @@ import Levenshtein
 import json
 from Parser import Parser
 from Output import Output
+from CribHub import CribHub
 
 
 def read_file(n):
@@ -30,16 +31,17 @@ def find_similar(q):
 def get_neighborhood_ranking(q):
     query = q
 
-    parser = Parser()
-    parser.parseAirbnb("./jsons/test.csv")
-    parser.parseNYTimes("./jsons/nytimes_restaurants.csv")
-    airbnb = parser.getAirbnbReviews()
-    nytimes = parser.getNYTimesReviews()
+    # parser = Parser()
+    # parser.parseAirbnb("./jsons/test.csv")
+    # parser.parseNYTimes("./jsons/nytimes_restaurants.csv")
+    # airbnb = parser.getAirbnbReviews()
+    # nytimes = parser.getNYTimesReviews()
 
-    output = Output(airbnb, nytimes)
-    results = output.getNaiveImpl(query)
+    # output = Output(airbnb, nytimes)
+    # results = output.getNaiveImpl(query)
 
-    d = results
+    inst = CribHub()
+    d = inst.handle_query(query)
     jsonarray = json.dumps(d)
 
     return jsonarray
