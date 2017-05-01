@@ -14,6 +14,9 @@ from collections import defaultdict
 # import io
 # import math
 import re
+from config import config
+import psycopg2
+
 
 
 class CribHub:
@@ -77,8 +80,8 @@ class CribHub:
         file = urllib2.urlopen('https://s3.amazonaws.com/cribble0108/airbnb_idf_values.json')
         self.airbnb_idf_values = json.load(file, object_hook=json_numpy_obj_hook, encoding='utf8')
         #listing_id to listing dict
-        file = urllib2.urlopen('https://s3.amazonaws.com/cribble0108/airbnb_listing_id_to_listing.json')
-        self.airbnb_lid_to_text = json.load(file, encoding='utf8')
+        #file = urllib2.urlopen('https://s3.amazonaws.com/cribble0108/airbnb_listing_id_to_listing.json')
+        #self.airbnb_lid_to_text = json.load(file, encoding='utf8')
 
 
 
@@ -110,8 +113,22 @@ class CribHub:
         file = urllib2.urlopen('https://s3.amazonaws.com/cribble0108/nyt_id_to_neighborhood.json')
         self.nytimes_id_to_neighborhood = json.load(file, encoding='utf8')
 
-
-
+        ###TOPIC MODELING###
+    
+        # Matrix for Topic Modeling
+        file = urllib2.urlopen('https://s3.amazonaws.com/cribble0108/topic_matrix.json')
+        self.topic_matrix = json.load(file, object_hook=json_numpy_obj_hook, encoding='utf8')
+        # Maps the word to the col number that  corresponds to it in the Topic matrix above
+        file = urllib2.urlopen('https://s3.amazonaws.com/cribble0108/word_to_top_index.json')
+        self.word_to_top_index = json.load(file, encoding='utf8')
+        # Maps the topic to the neighborhoods associated with that topic
+        file = urllib2.urlopen('https://s3.amazonaws.com/cribble0108/topic_to_neighborhood.json')
+        self.topic_to_neighborhoods = json.load(file, encoding='utf8')
+        
+        #######DATABASES#######
+        params = config()
+        self.conn = psycopg2.connect(**params)
+        self.cur = self.conn.cursor()
 
 
     def get_listing_score(self, query_svd, listing_id):
@@ -249,6 +266,19 @@ class CribHub:
         airbnb_wt = 0.8
         nytimes_wt = 0.2
 
+        """
+        rel_avg = airbnb_wt*avg_rel_airbnb + nytimes_wt*avg_rel_nytimes
+        irrel_avg = airbnb_wt*avg_irrel_airbnb + nytimes_wt*avg_irrel_nytimes
+
+        q_new = a*q + b*rel_avg - c*irrel_avg
+
+        return self.handle_query(q_new)
+        """
+
+        #     rel_airbnb_idx= airbnb_id_to_idx[relevant_id]
+        #     relevant_svd=airbnb_tfidf_svd[rel_airbnb_idx]
+        #     irrel_airbnb_idx=airbnb_id_to_idx[irrelevant_id]
+        #     irrelevant_svd=airbnb_tfidf_svd[irrel_airbnb_idx]
         airbnb_rel_vecs = [self.airbnb_tfidf_svd[self.airbnb_id_to_idx[aid]] for aid in airbnb_rel]
         airbnb_rel_avg = np.array(airbnb_rel_vecs).mean(0)
         airbnb_irr_vecs = [self.airbnb_tfidf_svd[self.airbnb_id_to_idx[aid]] for aid in airbnb_irr]
@@ -270,11 +300,58 @@ class CribHub:
                     weight[...] = 0
 
         return self.handle_query(q_mod)
+    
+        # Returns nothing if word is not found in topic model
+   
+    def topic_modeling(self, query):
+        query_words = query.split(" ")
+        indexes = [word_to_top_index[q] for q in query_words if q in word_to_top_index]
+        
+        #Adding all the query words together
+        vec = np.zeroes(10)
+        for topic in indexes:
+            vec += topic_matrix[:, indexes]
+       
+        #Checking if all values in vector are same if so we retun None
+        usetopic = False
+        value = vec[0]
+        for i in range(len(vec)):
+            if vec[0] != value:
+                usetopic = True
+        if usetopic:
+            topic = np.argmax(vec)
+            return topic_to_neighborhoods[topic]
+        else:
+            return None
 
 
-# if __name__ == '__main__':
+    # Returns sentiment from Lillian Lee's text-processing API: http://text-processing.com/docs/sentiment.html
+    # Input: text string
+    # Output: dictionary
+    # Output structure: {'probability':{u'neg':0.0222, u'neutral':0.1134, u'pos':0.7183}, u'label':u'pos'}
+    def get_sentiment(self, content):
+        r = requests.post("http://text-processing.com/api/sentiment/", {"text":content})
+        results = json.loads(r.text)
+        return results
+    
+    # Put in a list of listing_ids you want to get text for
+    # Gets out a list of tuples of form [(listing_id, review)]
+    def get_text(self, listing_ids):
+        """ query parts from the parts table """
+        try:
+            placeholders = ", ".join(str(lid) for lid in listing_ids)
+            query = "SELECT * FROM listingid_to_text WHERE listing_id IN (%s)" % placeholders
+            self.cur.execute(query)
+            rows = self.cur.fetchall()
+            return rows
+        except (Exception, psycopg2.DatabaseError) as error:
+            print(error)
+
+
+if __name__ == '__main__':
 #     query = "port authority"
 
-#     cribhub = CribHub()
+    cribhub = CribHub()
 #     print ("AWS Loaded")
 #     m = cribhub.handle_query(query)
+    print(cribhub.get_text([2515]))
