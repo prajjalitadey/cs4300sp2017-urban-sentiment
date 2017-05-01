@@ -40,7 +40,7 @@
                             search: "{{ search_params }}",
                         },
                         success: function(response) {
-
+                            console.log(response);
 
                             var resultsDict   = JSON.parse(response),
                                 defaultOutput = resultsDict["All"],
