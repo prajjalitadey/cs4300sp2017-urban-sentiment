@@ -67,7 +67,9 @@ def neighborhood_to_listing_ids():
         if(i % 1000 == 0):
             print(str(i)+" completed.")
         i += 1
-    return neighborhood_to_listing_ids
+
+    new_dict = {neighborhood: list(set(listing_ids)) for neighborhood, listing_ids in neighborhood_to_listing_ids.iteritems()}
+    return new_dict
 
 
 # airbnb function

@@ -65,8 +65,9 @@ class CribHub:
         file = urllib2.urlopen('https://s3.amazonaws.com/cribble0108/airbnb_word_to_index.json')
         self.airbnb_word_to_index = json.load(file, encoding='utf8')
         # #neighborhood to listing_ids (dictionary)
-        # file = urllib2.urlopen('https://s3.amazonaws.com/cribble0108/neighborhood_to_listing_ids.json')
-        # self.neighborhood_to_listing_ids = json.load(file, encoding='utf8')
+        file = urllib2.urlopen('https://s3.amazonaws.com/cribble0108/neighborhood_to_listing_ids.json')
+        self.neighborhood_to_listing_ids = json.load(file, encoding='utf8')
+        # print (type(self.neighborhood_to_listing_ids))
         #listing_id to neighborhood
         file = urllib2.urlopen('https://s3.amazonaws.com/cribble0108/listing_id_to_neighborhood.json')
         self.listing_id_to_neighborhood = json.load(file, encoding='utf8')
@@ -244,12 +245,16 @@ class CribHub:
             nbhd_scores_list = sorted([[nbhd, score] for nbhd, score in scores.iteritems()], key=lambda x: x[1], reverse=True)
             neighborhood_ranking[criteria] = nbhd_scores_list
 
-            # # get all listing scores
+            # get listing ids for top neighborhood only
             query_svd = self.get_query_svd(criteria, self.airbnb_word_to_index, self.airbnb_idf_values, self.airbnb_words_compressed)
-            listing_ids = self.airbnb_id_to_idx.keys()
+            tup = nbhd_scores_list[0]
+            top_neighborhood = tup[0]
+            listing_ids = self.neighborhood_to_listing_ids[top_neighborhood]
+
+            # listing_ids = self.airbnb_id_to_idx.keys()
             listing_text = self.get_text(listing_ids)
             for lid, text in listing_text:
-                listing_score = self.get_listing_score(query_svd, lid)
+                listing_score = self.get_listing_score(query_svd, str(lid))
                 listing_ranking[criteria].append([lid, listing_score, text])
             listing_ranking[criteria] = sorted(listing_ranking[criteria], key=lambda x: x[1], reverse=True)
 
@@ -260,7 +265,8 @@ class CribHub:
                 review_ranking[criteria].append([rid, review_score, text])
             review_ranking[criteria] = sorted(listing_ranking[criteria], key=lambda x: x[1], reverse=True)
 
-        return {'neighborhood_ranking': neighborhood_ranking, 'listing_ranking': listing_ranking, 'review_ranking': review_ranking, 'query': query}
+        # 'listing_ranking': listing_ranking,
+        return {'neighborhood_ranking': neighborhood_ranking, 'listing_ranking': listing_ranking,'review_ranking': review_ranking, 'query': query}
 
 
 
@@ -355,5 +361,5 @@ if __name__ == '__main__':
 
     cribhub = CribHub()
     # print ("AWS Loaded")
-#     m = cribhub.handle_query(query)
-    print(cribhub.get_text([2515]))
+    # m = cribhub.handle_query(query)
+    # print(cribhub.get_text([2515]))
