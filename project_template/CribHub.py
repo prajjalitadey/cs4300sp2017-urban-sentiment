@@ -110,8 +110,17 @@ class CribHub:
         file = urllib2.urlopen('https://s3.amazonaws.com/cribble0108/nyt_id_to_neighborhood.json')
         self.nytimes_id_to_neighborhood = json.load(file, object_hook=json_numpy_obj_hook, encoding='utf8')
 
-
-
+        ###TOPIC MODELING###
+    
+        # Matrix for Topic Modeling
+        file = urllib2.urlopen('https://s3.amazonaws.com/cribble0108/topic_matrix.json')
+        self.topic_matrix = json.load(file, object_hook=json_numpy_obj_hook, encoding='utf8')
+        # Maps the word to the col number that  corresponds to it in the Topic matrix above
+        file = urllib2.urlopen('https://s3.amazonaws.com/cribble0108/word_to_top_index.json')
+        self.word_to_top_index = json.load(file, encoding='utf8')
+        # Maps the topic to the neighborhoods associated with that topic
+        file = urllib2.urlopen('https://s3.amazonaws.com/cribble0108/topic_to_neighborhood.json')
+        self.topic_to_neighborhoods = json.load(file, encoding='utf8')
 
 
     def get_listing_score(self, query_svd, listing_id):
@@ -276,9 +285,27 @@ class CribHub:
         return self.handle_query(q_new)
 
 
-
-
-
+    # Returns nothing if word is not found in topic model
+    def topic_modeling(self, query):
+        query_words = query.split(" ")
+        indexes = [word_to_top_index[q] for q in query_words if q in word_to_top_index]
+        
+        #Adding all the query words together
+        vec = np.zeroes(10)
+        for topic in indexes:
+            vec += topic_matrix[:, indexes]
+       
+        #Checking if all values in vector are same if so we retun None
+        usetopic = False
+        value = vec[0]
+        for i in range(len(vec)):
+            if vec[0] != value:
+                usetopic = True
+        if usetopic:
+            topic = np.argmax(vec)
+            return topic_to_neighborhoods[topic]
+        else:
+            return None
 
 
         #     rel_airbnb_idx= airbnb_id_to_idx[relevant_id]
