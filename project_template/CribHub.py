@@ -14,6 +14,9 @@ from collections import defaultdict
 # import io
 # import math
 import re
+from config import config
+import psycopg2
+
 
 
 class CribHub:
@@ -77,8 +80,8 @@ class CribHub:
         file = urllib2.urlopen('https://s3.amazonaws.com/cribble0108/airbnb_idf_values.json')
         self.airbnb_idf_values = json.load(file, object_hook=json_numpy_obj_hook, encoding='utf8')
         #listing_id to listing dict
-        file = urllib2.urlopen('https://s3.amazonaws.com/cribble0108/airbnb_listing_id_to_listing.json')
-        self.airbnb_lid_to_text = json.load(file, encoding='utf8')
+        #file = urllib2.urlopen('https://s3.amazonaws.com/cribble0108/airbnb_listing_id_to_listing.json')
+        #self.airbnb_lid_to_text = json.load(file, encoding='utf8')
 
 
 
@@ -121,6 +124,11 @@ class CribHub:
         # Maps the topic to the neighborhoods associated with that topic
         file = urllib2.urlopen('https://s3.amazonaws.com/cribble0108/topic_to_neighborhood.json')
         self.topic_to_neighborhoods = json.load(file, encoding='utf8')
+        
+        #######DATABASES#######
+        params = config()
+        self.conn = psycopg2.connect(**params)
+        self.cur = self.conn.cursor()
 
 
     def get_listing_score(self, query_svd, listing_id):
@@ -313,16 +321,28 @@ class CribHub:
     # Input: text string
     # Output: dictionary
     # Output structure: {'probability':{u'neg':0.0222, u'neutral':0.1134, u'pos':0.7183}, u'label':u'pos'}
-    def get_sentiment(content):
+    def get_sentiment(self, content):
         r = requests.post("http://text-processing.com/api/sentiment/", {"text":content})
         results = json.loads(r.text)
         return results
+    
+    # Put in a list of listing_ids you want to get text for
+    # Gets out a list of tuples of form [(listing_id, review)]
+    def get_text(self, listing_ids):
+        """ query parts from the parts table """
+        try:
+            self.cur.execute("SELECT * FROM listingid_to_text WHERE listing_id IN (%s)", listing_ids)
+            rows = self.cur.fetchall()
+            return rows
+        except (Exception, psycopg2.DatabaseError) as error:
+            print(error)
 
 
 
-# if __name__ == '__main__':
+if __name__ == '__main__':
 #     query = "port authority"
 
-#     cribhub = CribHub()
+    cribhub = CribHub()
 #     print ("AWS Loaded")
 #     m = cribhub.handle_query(query)
+    print(cribhub.get_text([2515]))
