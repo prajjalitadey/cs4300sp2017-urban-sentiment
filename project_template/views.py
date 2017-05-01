@@ -4,8 +4,8 @@ from django.http import HttpResponse
 from .models import Docs
 from django.template import loader
 from .form import QueryForm
-from .test import find_similar
-from .test import get_neighborhood_ranking
+from .test import original_query
+from .test import requery
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.contrib.auth.models import User
 from django.http import JsonResponse
@@ -18,7 +18,7 @@ def index(request):
     search = request.GET.get('search','')
     request_type = (request.META["HTTP_ACCEPT"].split(",")[0])
     if (request_type == "application/json"):
-        output = get_neighborhood_ranking(search)
+        output = original_query(search)
         return JsonResponse(output, content_type="application/json", safe=False)
         
     elif (request_type == "text/html"):
