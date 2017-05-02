@@ -4,6 +4,7 @@ import json
 from Parser import Parser
 from Output import Output
 from CribHub import CribHub
+import ast
 
 inst = CribHub()
 
@@ -35,12 +36,6 @@ def original_query(q):
     return jsonarray
 
 
-def requery(q):
-    new = json.loads(q)
-    d = inst.rocchio(q)
-    jsonarray = json.dumps(d)
-    return jsonarray
-
 
 def handle_click(neighborhood):
     idx = neighborhood.find("//name//")
@@ -52,5 +47,20 @@ def handle_click(neighborhood):
     return jsonarray
 
 
+def requery(q):
+    print("WE IN HERE ! WE IN NNNNNN HERE")
+    print("sanity??")
+    print(q)
+    print(ast.literal_eval(q))
+    data = ast.literal_eval(q)
+    print("-----------------------")
+    d = inst.rocchio(data["query"], data["relevant"], data["irrelevant"])
+    jsonarray = json.dumps(d)
+    print("-----------------------")
+    print("-----------------------")
+    print("-----------------------")
+    print("-----------------------")
+    print("-----------------------")
+    return jsonarray
 
 

@@ -58,11 +58,17 @@
                                 defaultOutput = resultsDict["neighborhood_ranking"]["all_criteria"],
                                 currentOutput = resultsDict["neighborhood_ranking"]["all_criteria"],
                                 queryText     = resultsDict["query"]
-                                topListings   = null
+                                topListings   = []
+
+                            console.log("MAIN OUTPUT: ", resultsDict)
 
                             currentCriteria = queryText;
 
-                            if(resultsDict["listing_ranking"]["all_criteria"]) topListings = resultsDict["listing_ranking"]["all_criteria"];
+                            if(resultsDict["listing_ranking"]) {
+                                if(resultsDict["listing_ranking"]["all_criteria"]) {
+                                    topListings = resultsDict["listing_ranking"]["all_criteria"];
+                                }
+                            }
 
                             // console.log("RESULTS DICT: ",resultsDict);
                             // console.log("DEFAULT OUTPUT: ",defaultOutput);
@@ -104,17 +110,42 @@
 
                             // TOP LISTINGS UI
                             for (var i = 0 ; i < 4 ; i++) {
-                                if(topListings && topListings[i]) {
+                                if(topListings.length > 0 && topListings[i]) {
+
                                     listingText = topListings[i][2];
-                                    tmp = i+1
-                                    // $("#doc"+(i+1)).append(listingText);
-
-
                                     listingText = listingText.split("-----")
+
+                                    tmp = i+1
+
+                                    queryText.replace(/,/g , " ");
+                                    var queryWords = queryText.split(" ")
+
+                                    var bestReview = {"entry":listingText[0],"count":0};
+
+                                    for (let entry of listingText) {
+                                        var words = entry.split(" "), count = 0;
+                                        for (let word of words) {
+                                            if(queryWords.contains(word.trim())) count++
+                                        }
+                                        if(bestReview["count"] < count) {
+                                            bestReview["entry"] = entry;
+                                            bestReview["count"] = count; 
+                                        }
+                                    }
+
+                                    reviewBuffer = "";
+                                    words = bestReview["entry"].split(" ");
+                                    for (let word of words) {
+                                        if(queryWords.contains(word)) {
+                                            reviewBuffer = reviewBuffer + " <span class='queryWord' style='background-color:#efe40e'>" + word + "</span> ";
+                                        } else {
+                                            reviewBuffer = reviewBuffer + " " + word;
+                                        }
+                                    }
 
                                     $(".checkboxes").append("<div class='checkbox'><label><input type='checkbox' name='listing" + tmp + "' value=''> <span id='doc" + tmp + "'></span> </label></div> <br> <hr>")
 
-                                    $("#doc"+tmp).append(listingText[0]);
+                                    $("#doc"+tmp).append(reviewBuffer);
                                 }
                             }
 
@@ -157,7 +188,7 @@
 
                                 feedback = {"relevant":[],"irrelevant":[],"query":currentCriteria};
 
-                                if(topListings) {
+                                if(topListings.length > 0) {
 
 
                                 for (var i = 0 ; i < 10 ; i++) {
@@ -187,6 +218,7 @@
                                         extra: feedback
                                     },
                                     success: function(response) {
+                                        console.log('HOLLLLAAAAA')
                                         console.log(response);
                                         console.log("success!!!!!");
 
@@ -276,8 +308,6 @@
                                 data.forEach(function(d) {
                                     d.score = +d.score;
                                 });
-
-                                console.log("DATA: ",data)
 
                                 x.domain([ d3.min(data, function(d){ return d.score; }) , d3.max(data, function(d){ return d.score; })])
                                 y.domain(data.map(function(d) { return d.neighborhood; }));
@@ -374,6 +404,12 @@
                         .projection(d3.geoAlbersUsa()
                         .fitSize([width-margin.top, height-margin.top], nyfeatures));
 
+                    svg.append("text")
+                        .attr("x",55)
+                        .attr("y",150)
+                        .attr("font-size","11px")
+                        .text("Click area for more info.")
+
                     var minX = 0.0;
 
                     for (let val of Object.values(outputDict)) {
@@ -434,8 +470,9 @@
                                     .attr("x",55)
                                     .attr("y",100)
                                     .attr("font-size","20px")
-
                                     .text(d.properties.neighbourhood)
+
+                                
 
                                 $.ajax({
                                     type: "GET",
@@ -447,7 +484,7 @@
                                         extra: feedback
                                     },
                                     success: function(response) {
-                                        console.log(response);
+                                        //console.log(response);
                                         console.log("map success");
                                         response = JSON.parse(response);
                                         console.log(response)
@@ -475,6 +512,16 @@
                         m = this.toString().match(re);
                     return m ? parseFloat(m[1]) : this.valueOf();
                 };
+
+                Array.prototype.contains = function(obj) {
+                    var i = this.length;
+                    while (i--) {
+                        if (this[i] == obj) {
+                            return true;
+                        }
+                    }
+                    return false;
+                }
             
             </script>
 
