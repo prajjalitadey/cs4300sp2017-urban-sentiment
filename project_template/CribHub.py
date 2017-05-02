@@ -244,17 +244,19 @@ class CribHub:
             scores = self.combine_scores(self.score_airbnb_neighborhoods(criteria), self.score_nytimes_neighborhoods(criteria))
             nbhd_scores_list = sorted([[nbhd, score] for nbhd, score in scores.iteritems()], key=lambda x: x[1], reverse=True)
             neighborhood_ranking[criteria] = nbhd_scores_list
+            tup = nbhd_scores_list[0]
+            top_neighborhood = tup[0]
 
             # get listing ids for top neighborhood only
             query_svd = self.get_query_svd(criteria, self.airbnb_word_to_index, self.airbnb_idf_values, self.airbnb_words_compressed)
-            tup = nbhd_scores_list[0]
-            top_neighborhood = tup[0]
             listing_ids = self.neighborhood_to_listing_ids[top_neighborhood]
 
             # listing_ids = self.airbnb_id_to_idx.keys()
             listing_text = self.get_text(listing_ids)
             for lid, text in listing_text:
                 listing_score = self.get_listing_score(query_svd, str(lid))
+                if criteria == query:
+                    criteria = 'all_criteria'
                 listing_ranking[criteria].append([lid, listing_score, text])
             listing_ranking[criteria] = sorted(listing_ranking[criteria], key=lambda x: x[1], reverse=True)
 
@@ -262,6 +264,8 @@ class CribHub:
             query_svd = self.get_query_svd(query, self.nytimes_word_to_index, self.nytimes_idf_values, self.nytimes_words_compressed)
             for rid, text in self.nytimes_id_to_review.iteritems():
                 review_score = self.get_review_score(query_svd, rid)
+                if criteria == query:
+                    criteria = 'all_criteria'
                 review_ranking[criteria].append([rid, review_score, text])
             review_ranking[criteria] = sorted(listing_ranking[criteria], key=lambda x: x[1], reverse=True)
 
@@ -283,10 +287,6 @@ class CribHub:
         return self.handle_query(q_new)
         """
 
-        #     rel_airbnb_idx= airbnb_id_to_idx[relevant_id]
-        #     relevant_svd=airbnb_tfidf_svd[rel_airbnb_idx]
-        #     irrel_airbnb_idx=airbnb_id_to_idx[irrelevant_id]
-        #     irrelevant_svd=airbnb_tfidf_svd[irrel_airbnb_idx]
         airbnb_rel_vecs = [self.airbnb_tfidf_svd[self.airbnb_id_to_idx[aid]] for aid in airbnb_rel]
         airbnb_rel_avg = np.array(airbnb_rel_vecs).mean(0)
         airbnb_irr_vecs = [self.airbnb_tfidf_svd[self.airbnb_id_to_idx[aid]] for aid in airbnb_irr]
