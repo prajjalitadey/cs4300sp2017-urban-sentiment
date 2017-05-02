@@ -371,7 +371,7 @@ class CribHub:
             return rows
         except (Exception, psycopg2.DatabaseError) as error:
             print(error)
-            conn._rollback()
+            self.conn._rollback()
 
 
 if __name__ == '__main__':
