@@ -439,17 +439,11 @@ class CribHub:
         vec = np.zeros(10)
         for topic in indexes:
             vec += self.topic_matrix[:, topic]
-<<<<<<< HEAD
-        #print(vec)
-        #Checking if all values in vector are same if so we retun None
-        topic = str(np.argmax(vec))
-        #print(type(self.topic_to_neighborhoods[topic]))
-=======
+
         #Checking if all values in vector are same if so we retun None
         topic = str(np.argmax(vec))
         if topic == '6':
             return None
->>>>>>> 0107c77f969d15663b90f49624f5bfce3c816be6
         return self.topic_to_neighborhoods[topic]
 
 
