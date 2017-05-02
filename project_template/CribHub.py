@@ -266,7 +266,10 @@ class CribHub:
             # get neighborhood score
             scores = self.combine_scores(self.score_airbnb_neighborhoods(criteria), self.score_nytimes_neighborhoods(criteria))
             nbhd_scores_list = sorted([[nbhd, score] for nbhd, score in scores.iteritems()], key=lambda x: x[1], reverse=True)
-            neighborhood_ranking[criteria] = nbhd_scores_list
+            if criteria == query:
+                neighborhood_ranking['all_criteria'] = nbhd_scores_list
+            else:
+                neighborhood_ranking[criteria] = nbhd_scores_list
             top_neighborhood = nbhd_scores_list[0][0]
 
             # get listing ids for top neighborhood only
