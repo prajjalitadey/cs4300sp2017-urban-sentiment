@@ -342,17 +342,18 @@ class CribHub:
             airbnb_irr_avg = np.array(airbnb_irr_vecs).mean(0)
             airbnb_q_mod -= c*airbnb_irr_avg
 
+        nytimes_query_vec = self.get_query_svd(q, self.nytimes_word_to_index, self.nytimes_idf_values, self.nytimes_words_compressed)
+        nytimes_q_mod = a*nytimes_query_vec
+
         # nytimes list of vectors
         nytimes_rel_vecs = [self.nytimes_tfidf_svd[self.nytimes_id_to_idx[nid]] for nid in nytimes_rel]
         if len(nytimes_rel_vecs) > 0:
             nytimes_rel_avg = np.array(nytimes_rel_vecs).mean(0)
+            nytimes_q_mod += b*nytimes_rel_avg
         nytimes_irr_vecs = [self.nytimes_tfidf_svd[self.nytimes_id_to_idx[nid]] for nid in nytimes_irr]
         if len(nytimes_irr_vecs) > 0:
             nytimes_irr_avg = np.array(nytimes_irr_vecs).mean(0)
-
-        # new nytimes q_mod
-        nytimes_query_vec = self.get_query_svd(q, self.nytimes_word_to_index, self.nytimes_idf_values, self.nytimes_words_compressed)
-        nytimes_q_mod = a*nytimes_query_vec + b*nytimes_rel_avg - c*nytimes_irr_avg
+            nytimes_q_mod -= c*nytimes_irr_avg
 
         if clip:
             for abnb_weight in np.nditer(airbnb_q_mod, op_flags=['readwrite']):
