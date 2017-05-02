@@ -32,6 +32,9 @@ def find_similar(q):
 def original_query(q):
     d = inst.handle_query(q)
     jsonarray = json.dumps(d)
+    print("DONE WITH ORIGINAL QUERY")
+    print(len(jsonarray))
+    print("------------------------")
     return jsonarray
 
 

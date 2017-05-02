@@ -95,7 +95,7 @@ class CribHub:
         #word to index mapping to convert query to tfidf vector (dictionary)
         file = urllib2.urlopen('https://s3.amazonaws.com/cribble0108/nytimes_word_to_index.json')
         self.nytimes_word_to_index = json.load(file, encoding='utf8')
-        #neighborhood to listing_ids (dictionary)
+        #neighborhood to review_ids (dictionary)
         # file = urllib2.urlopen('https://s3.amazonaws.com/cribble0108/nyt_nbhd_to_review.json')
         # self.nytimes_nbhd_to_review = json.load(file, encoding='utf8')
         #listing_id to neighborhood
@@ -130,9 +130,11 @@ class CribHub:
         params = config()
         self.conn = psycopg2.connect(**params)
         self.cur = self.conn.cursor()
+        # self.conn.autocommit(True)
 
 
     def get_listing_score(self, query_svd, listing_id):
+        listing_id = "13571116";
         idx = self.airbnb_id_to_idx[listing_id]
         tfidf_svd = np.array(self.airbnb_tfidf_svd[idx])
         return tfidf_svd.dot(query_svd)
@@ -216,8 +218,8 @@ class CribHub:
 
 
     def combine_scores(self, airbnb_scores, nytimes_scores):
-        a = 0.8
-        b = 0.2
+        a = 0.5
+        b = 0.5
 
         airbnb = set(airbnb_scores.keys())
         nytimes = set(nytimes_scores.keys())
@@ -259,17 +261,19 @@ class CribHub:
             scores = self.combine_scores(self.score_airbnb_neighborhoods(criteria), self.score_nytimes_neighborhoods(criteria))
             nbhd_scores_list = sorted([[nbhd, score] for nbhd, score in scores.iteritems()], key=lambda x: x[1], reverse=True)
             neighborhood_ranking[criteria] = nbhd_scores_list
+            top_neighborhood = nbhd_scores_list[0][0]
 
             # get listing ids for top neighborhood only
             query_svd = self.get_query_svd(criteria, self.airbnb_word_to_index, self.airbnb_idf_values, self.airbnb_words_compressed)
-            tup = nbhd_scores_list[0]
-            top_neighborhood = tup[0]
-            listing_ids = self.neighborhood_to_listing_ids[top_neighborhood]
+            airbnb_listing_ids = self.neighborhood_to_listing_ids[top_neighborhood]
+            airbnb_listing_ids = list(set(airbnb_listing_ids))
 
             # listing_ids = self.airbnb_id_to_idx.keys()
-            listing_text = self.get_text(listing_ids)
+            listing_text = self.get_text(airbnb_listing_ids)
             for lid, text in listing_text:
                 listing_score = self.get_listing_score(query_svd, str(lid))
+                if criteria == query:
+                    criteria = 'all_criteria'
                 listing_ranking[criteria].append([lid, listing_score, text])
             listing_ranking[criteria] = sorted(listing_ranking[criteria], key=lambda x: x[1], reverse=True)
 
@@ -277,11 +281,13 @@ class CribHub:
             query_svd = self.get_query_svd(query, self.nytimes_word_to_index, self.nytimes_idf_values, self.nytimes_words_compressed)
             for rid, text in self.nytimes_id_to_review.iteritems():
                 review_score = self.get_review_score(query_svd, rid)
+                if criteria == query:
+                    criteria = 'all_criteria'
                 review_ranking[criteria].append([rid, review_score, text])
-            review_ranking[criteria] = sorted(listing_ranking[criteria], key=lambda x: x[1], reverse=True)
+            review_ranking[criteria] = sorted(review_ranking[criteria], key=lambda x: x[1], reverse=True)
 
         # 'listing_ranking': listing_ranking,
-        return {'neighborhood_ranking': neighborhood_ranking, 'listing_ranking': listing_ranking,'review_ranking': review_ranking, 'query': query}
+        return {'neighborhood_ranking': neighborhood_ranking, 'listing_ranking': listing_ranking, 'review_ranking': review_ranking, 'query': query}
 
 
 
@@ -298,10 +304,6 @@ class CribHub:
         return self.handle_query(q_new)
         """
 
-        #     rel_airbnb_idx= airbnb_id_to_idx[relevant_id]
-        #     relevant_svd=airbnb_tfidf_svd[rel_airbnb_idx]
-        #     irrel_airbnb_idx=airbnb_id_to_idx[irrelevant_id]
-        #     irrelevant_svd=airbnb_tfidf_svd[irrel_airbnb_idx]
         airbnb_rel_vecs = [self.airbnb_tfidf_svd[self.airbnb_id_to_idx[aid]] for aid in airbnb_rel]
         airbnb_rel_avg = np.array(airbnb_rel_vecs).mean(0)
         airbnb_irr_vecs = [self.airbnb_tfidf_svd[self.airbnb_id_to_idx[aid]] for aid in airbnb_irr]
@@ -372,5 +374,6 @@ if __name__ == '__main__':
 
     cribhub = CribHub()
     # print ("AWS Loaded")
+
     # m = cribhub.handle_query(query)
     # print(cribhub.get_text([2515]))
