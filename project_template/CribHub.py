@@ -287,8 +287,8 @@ class CribHub:
                     # split into reviews
                     listing_score = self.get_listing_score(airbnb_query_svd, str(lid))
 
-                    if query_label != "neutral":
-                        listing_score = self.sentiment_score(listing_score, query_label, text)
+                    # if query_label != "neutral":
+                       # listing_score = self.sentiment_score(listing_score, query_label, text)
                     if criteria == query:
                         criteria = 'all_criteria'
 
@@ -453,10 +453,7 @@ class CribHub:
     def get_sentiment(self, content):
         content = content[:5000]
         r = requests.post("http://text-processing.com/api/sentiment/", {"text": content})
-        print (r.status_code)
-        print (r.text)
         results = json.loads(r.text)
-
         return results
 
     # Put in a list of listing_ids you want to get text for
@@ -485,8 +482,6 @@ class CribHub:
         listings_to_score = [(listing, self.get_listing_score(query_svd, str(listing))) for listing in listing_ids]
         best_five, _ = zip(*sorted(listings_to_score, key=lambda x: x[1], reverse=True)[:5])
         all_reviews = self.get_text(best_five, separated=True)
-        #sentiment_reviews = [(listing, self.get_sentiment(review), review) for listing, reviews in all_reviews for review in reviews]
-        #sorted_sentiment_reviews = sorted(sentiment_reviews, key = lambda x: x[1], reverse = True)
         reviews_svd = [(listing, self.get_query_svd(review, self.airbnb_word_to_index, self.airbnb_idf_values, self.airbnb_words_compressed), review)
                        for listing, reviews in all_reviews for review in reviews]
         review_scores = [(listingid, query_svd.dot(review_svd) / la.norm(review_svd), review) for listingid, review_svd, review in reviews_svd]
