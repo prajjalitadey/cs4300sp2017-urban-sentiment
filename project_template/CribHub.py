@@ -130,6 +130,7 @@ class CribHub:
         params = config()
         self.conn = psycopg2.connect(**params)
         self.cur = self.conn.cursor()
+        # self.conn.autocommit(True)
 
 
     def get_listing_score(self, query_svd, listing_id):
@@ -202,8 +203,8 @@ class CribHub:
 
 
     def combine_scores(self, airbnb_scores, nytimes_scores):
-        a = 0.8
-        b = 0.2
+        a = 0.5
+        b = 0.5
 
         airbnb = set(airbnb_scores.keys())
         nytimes = set(nytimes_scores.keys())
@@ -250,6 +251,7 @@ class CribHub:
             # get listing ids for top neighborhood only
             query_svd = self.get_query_svd(criteria, self.airbnb_word_to_index, self.airbnb_idf_values, self.airbnb_words_compressed)
             airbnb_listing_ids = self.neighborhood_to_listing_ids[top_neighborhood]
+            airbnb_listing_ids = list(set(airbnb_listing_ids))
 
             # listing_ids = self.airbnb_id_to_idx.keys()
             listing_text = self.get_text(airbnb_listing_ids)
