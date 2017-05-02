@@ -5,6 +5,7 @@ import json
 import urllib2
 # from sklearn.feature_extraction.text import TfidfVectorizer
 import numpy as np
+from numpy import linalg as la
 from collections import defaultdict
 # from collections import Counter
 # from numpy import linalg as LA
@@ -185,15 +186,16 @@ class CribHub:
         #Otherwise, the topic modeling will zero out the other scores.
         
         topic_neighborhood_scores = all_neighborhood_scores
-#        topic_neighborhood_scores={}
-#        if topic_neighborhoods == None:
-#            topic_neighborhood_scores = all_neighborhood_scores
-#        else:
-#            for neighborhood in all_neighborhood_scores.keys():
-#                if neighborhood in topic_neighborhoods:
-#                    topic_neighborhood_scores[neighborhood] = all_neighborhood_scores[neighborhood]
-#                else:
-#                    topic_neighborhood_scores[neighborhood] = [(0,0)]
+        topic_neighborhood_scores={}
+        if topic_neighborhoods == None:
+            topic_neighborhood_scores = all_neighborhood_scores
+        else:
+            for neighborhood in all_neighborhood_scores.keys():
+                if neighborhood in topic_neighborhoods:
+                    topic_neighborhood_scores[neighborhood] = all_neighborhood_scores[neighborhood]
+                else:
+                    topic_neighborhood_scores[neighborhood] = [(0,0)]
+                    
 
         for neighborhood, scores in topic_neighborhood_scores.iteritems():  # scores is a list of tuples with id, score
             #print(neighborhood)
@@ -251,18 +253,15 @@ class CribHub:
         # edit airbnb_scores --- neighborhood_to_listing_ids
 
         # edit nytimes_scores
-
         return neighborhood_to_score
-
-
 
 
     def handle_query(self, query):
         query_criteria = query.split(",")
         query_criteria.append(query)
         query_criteria = [q.strip() for q in query_criteria]
-
-
+        query_label = get_sentiment(query)['label']
+        
         neighborhood_ranking = {}
         listing_ranking = defaultdict(list)
         review_ranking = defaultdict(list)
@@ -288,6 +287,8 @@ class CribHub:
             if listing_text:
                 for lid, text in listing_text:
                     listing_score = self.get_listing_score(query_svd, str(lid))
+                    if query_label != "neutral":
+                        listing_score = self.sentiment_score(listing_score, query_label, text)
                     if criteria == query:
                         criteria = 'all_criteria'
                     listing_ranking[criteria].append([lid, listing_score, text])
@@ -306,6 +307,14 @@ class CribHub:
         return {'neighborhood_ranking': neighborhood_ranking, 'listing_ranking': listing_ranking, 'review_ranking': review_ranking, 'query': query}
 
 
+    def sentiment_score(self, score, query_label, text):
+        result = get_sentiment(text)
+        if result['label'] == 'neutral':
+            return score
+        if result['label'] == query_label:
+            return (1 + result['probability'][result['label']]) * score
+        else:
+            return (1 - result['probability'][result['label']]) * score
 
     def rocchio(self, q, airbnb_rel, airbnb_irr, nytimes_rel, nytimes_irr, a=.7, b=.5, c=.5, clip=True):
         airbnb_wt = 0.8
@@ -373,17 +382,33 @@ class CribHub:
 
     # Put in a list of listing_ids you want to get text for
     # Gets out a list of tuples of form [(listing_id, review)]
-    def get_text(self, listing_ids):
+    # If seperated is True then it returns 
+    def get_text(self, listing_ids, separated=False):
         """ query parts from the parts table """
         try:
             placeholders = ", ".join(str(lid) for lid in listing_ids)
-            query = "SELECT * FROM listingid_to_text WHERE listing_id IN (%s)" % placeholders
+            query = "SELECT * FROM listingid_to_text_sep WHERE listing_id IN (%s)" % placeholders
+            print(placeholders)
             self.cur.execute(query)
             rows = self.cur.fetchall()
+            if separated:
+                rows = [(row[0], row[1].split('-----')) for row in rows]
             return rows
         except (Exception, psycopg2.DatabaseError) as error:
             print(error)
-            self.conn._rollback()
+            self.conn.rollback()
+            
+    def neighborhood_information(self, query, neighborhood):
+        query_svd = self.get_query_svd(query, self.airbnb_word_to_index, self.airbnb_idf_values, self.airbnb_words_compressed)
+        listing_ids = self.neighborhood_to_listing_ids[neighborhood]
+        listings_to_score = [(listing, self.get_listing_score(query_svd, str(listing))) for listing in listing_ids]
+        best_five, _ = zip(*sorted(listings_to_score, key = lambda x: x[1], reverse = True)[:5])
+        all_reviews = self.get_text(best_five, separated=True)
+        reviews_svd = [(listing, self.get_query_svd(review, self.airbnb_word_to_index, self.airbnb_idf_values, self.airbnb_words_compressed), review)
+                       for listing, reviews in all_reviews for review in reviews]
+        review_scores = [(listingid, query_svd.dot(review_svd) / la.norm(review_svd), review) for listingid, review_svd, review in reviews_svd]
+        top_reviews = sorted(review_scores, key = lambda x: x[1], reverse = True)[:10]
+        return top_reviews
 
 
 if __name__ == '__main__':
@@ -391,7 +416,11 @@ if __name__ == '__main__':
 
     cribhub = CribHub()
     # print ("AWS Loaded")
+    
+    print(len(cribhub.get_text([2515], separated=True)[0][1]))
+    
+    print(cribhub.neighborhood_information("bars", "soho"))
 
-    m = cribhub.handle_query("bars nearby subway")
-    print(m['neighborhood_ranking'])
+    #m = cribhub.handle_query("bars nearby subway")
+    #print(m['neighborhood_ranking'])
     # print(cribhub.get_text([2515]))#
