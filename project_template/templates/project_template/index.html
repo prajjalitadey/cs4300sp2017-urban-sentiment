@@ -8,6 +8,8 @@
         <script src="/static/javascript/bootstrap.min.js"></script> 
         <script src="https://d3js.org/d3.v4.min.js"></script>
         <script src="https://d3js.org/topojson.v1.min.js"></script>
+        <script src="/static/javascript/d3-tip.js"></script> 
+        <script src="https://d3js.org/d3-scale-chromatic.v1.min.js"></script>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/queue-async/1.0.7/queue.min.js"></script>
 
 
@@ -24,12 +26,23 @@
 
         {% block javascript %}  
             <script>
+
+                currentCriteria = "All";
+
                 $(document).ready(function(){
                     var showOutput = false;
                     $(".output").addClass("hidden");
-                    $("#query-btn").on("click",function() {
-                        var val = $(this).val();
-                    });
+                    $(".query-text").addClass("hidden");
+                    $("#selectedPlace").addClass("hidden");
+                    $(".placeInfo").addClass("hidden");
+                    $(".back-to-search").addClass("hidden");
+                    $(".user-query").addClass("hidden");
+                    $(".back-to-search").on("click",function(){
+                        var target = $(".splash");
+                        $('html,body').animate({
+                            scrollTop: target.offset().top
+                        }, 1000);
+                    })
                     
                     $.ajax({
                         type: "GET",
@@ -40,13 +53,20 @@
                             search: "{{ search_params }}",
                         },
                         success: function(response) {
-                            console.log(response);
-/*
-                            var resultsDict   = JSON.parse(response),
-                                defaultOutput = resultsDict["All"],
-                                queryText     = resultsDict["QUERY"][0]
 
-                            console.log(resultsDict);
+                            var resultsDict   = JSON.parse(response),
+                                defaultOutput = resultsDict["neighborhood_ranking"]["all_criteria"],
+                                currentOutput = resultsDict["neighborhood_ranking"]["all_criteria"],
+                                queryText     = resultsDict["query"]
+                                topListings   = null
+
+                            currentCriteria = queryText;
+
+                            if(resultsDict["listing_ranking"]["all_criteria"]) topListings = resultsDict["listing_ranking"]["all_criteria"];
+
+                            // console.log("RESULTS DICT: ",resultsDict);
+                            // console.log("DEFAULT OUTPUT: ",defaultOutput);
+                            // console.log("QUERY TEXT: ",queryText);
 
                             if(queryText === ""){
                                 $(".output").addClass("hidden");
@@ -56,9 +76,25 @@
                                 $(".output").removeClass("hidden");
                                 $(".query-text").removeClass("hidden");
                                 $(".user-query").removeClass("hidden");
+                                $(".back-to-search").removeClass("hidden");
+                                var target = $(".output-container");
+
+                                $('html,body').animate({
+                                  scrollTop: target.offset().top
+                                }, 1000);
+
+                                d3.json("/static/map_data/neighbourhoods.json",function(data){
+                                    drawMap(data,currentOutput);
+
+                                    outputObjects = [];
+                                    for (let arr of defaultOutput) {
+                                        outputObjects.push({"neighborhood":arr[0],"score":arr[1]})
+                                    }
+                                    drawBarChart(outputObjects);
+                                })
                             }
 
-                            //
+                            // CRITERIA BUTTON UI 
                             var queryCriteria = queryText.split(",")
                                 queryCriteria.push("All")
                             for (let criteria of queryCriteria) {
@@ -66,33 +102,224 @@
                                 $(".user-query").append("<span class='criteria' id='" + spliced +"'>" + criteria + "</span>");    
                             }
 
+                            // TOP LISTINGS UI
+                            for (var i = 0 ; i < 4 ; i++) {
+                                if(topListings && topListings[i]) {
+                                    listingText = topListings[i][2];
+                                    tmp = i+1
+                                    // $("#doc"+(i+1)).append(listingText);
+
+
+                                    listingText = listingText.split("-----")
+
+                                    $(".checkboxes").append("<div class='checkbox'><label><input type='checkbox' name='listing" + tmp + "' value=''> <span id='doc" + tmp + "'></span> </label></div> <br> <hr>")
+
+                                    $("#doc"+tmp).append(listingText[0]);
+                                }
+                            }
+
+                            // HIGHTLIGHT DEFAULT CRITERIA
                             $("span.criteria#All").addClass("selected");
 
+                            // HANDLE CRITERIA CLICK
                             $(".criteria").on("click", function(e){
+
                                 $(".criteria").removeClass("selected");
                                 e.preventDefault();
                                 $(this).addClass("selected");
                                 $(".search-results").empty();
+                                $("#map").empty();
 
                                 var chosenCriteria = ($(this).text()).trim();
+
+                                currentCriteria = chosenCriteria
+
                                 var outputList = resultsDict[chosenCriteria]
-                                for (var i = 1 ; i < 10 ; i++) {
-                                    var obj = outputList[i];
-                                    $(".search-results").append("<p>" + i + ". <span class='neighborhood-name'>" + obj[0] + "</span>, " + Number((parseFloat(obj[1])).toFixed(4)) +"</p>"); 
+                                 currentOutput = outputList
+
+                                criteria = ($(this).text()).trim()
+                                if(criteria === "All") {
+                                    currentOutput = resultsDict["neighborhood_ranking"]["all_criteria"];
+                                } else {
+                                    currentOutput = resultsDict["neighborhood_ranking"][criteria];
                                 }
+                                
+
+                            
+                                d3.json("/static/map_data/neighbourhoods.json",function(data){
+                                    drawMap(data,currentOutput);
+                                    redrawBars(currentOutput);
+                                });
+
                             });
 
-                            // Append output to div. 
-                            for (var i = 1 ; i < 10 ; i++) {
-                                var obj = defaultOutput[i];
-                                $(".search-results").append("<p>" + i + ". <span class='neighborhood-name'>" + obj[0] + "</span>, " + Number((parseFloat(obj[1])).toFixed(4)) +"</p>"); 
+                            $("#requery-btn").on("click", function() {
+
+                                feedback = {"relevant":[],"irrelevant":[],"query":currentCriteria};
+                                if(topListings) {
+
+                                for (var i = 0 ; i < 10 ; i++) {
+                                    var listingNumber = i+1,
+                                        listingText = topListings[i],
+                                        radioVal = $('input[name=listing' + listingNumber + ']:checked').val()
+
+                                    if(listingText) {
+                                        if(radioVal) {
+                                            feedback["relevant"].push(listingText[0]);
+                                        } else {
+                                            feedback["irrelevant"].push(listingText[0]);
+                                        }
+                                    }
+                                }
+
+                                feedback = JSON.stringify(feedback)
+
+                                $.ajax({
+                                    type: "GET",
+                                    url: "/",
+                                    contentType: "application/json",
+                                    dataType: "json",
+                                    data: {
+                                        search: "{{ search_params }}",
+                                        extra: feedback
+                                    },
+                                    success: function(response) {
+                                        console.log(response);
+                                        console.log("success!!!!!");
+
+                                    },
+
+                                    error: function(response) {
+                                        console.log("error");
+                                    }
+
+                                });
+
+                                }
+
+                            })
+
+                            // // HANDLE REQUERY / FRONT END ROCCIO
+                            // function requery() {
+                            //     var reviewNumber = ($(".checkboxes").children()).length;
+
+                                
+                            // }
+
+
+                            // REDRAW BAR GRAPH
+                            function redrawBars(currentOutput) {
+
+                                $(".search-results").empty();
+
+                                outputObjects = [];
+                                for (let arr of currentOutput) {
+                                    outputObjects.push({"neighborhood":arr[0],"score":arr[1]})
+                                }
+                                console.log("CURRRR",currentOutput)
+                                drawBarChart(outputObjects);
+
                             }
 
-                            // d3.json("/static/map_data/newyork.json",function(data){
-                            //     drawMap(response,data);
-                            // })
+                            // INITIALIZE BAR CHART
+                            function drawBarChart(ranking) {
 
-*/
+                                //console.log(ranking);
+
+                                //ranking = ranking.reverse();
+
+                                console.log(ranking)
+
+                                var data = []; 
+
+                                for(var i = 0 ; i < ranking.length ; i++) {
+                                    if(ranking[i].score > 0.00 && data.length < 10) {
+                                        data.push(ranking[i])
+                                    }
+                                }
+
+                                var margin = {top: 20, right: 20, bottom: 30, left: 10},
+                                width = 500 - margin.left - margin.right,
+                                height = 300 - margin.top - margin.bottom;
+
+                                var y = d3.scaleBand()
+                                    .range([height, 0])
+                                    .padding(0.1);
+
+                                var x = d3.scaleLinear()
+                                    .range([0, width]);
+                                      
+                                var svg = d3.select(".search-results").append("svg")
+                                    .attr("width", width + margin.left + margin.right)
+                                    .attr("height", height + margin.top + margin.bottom)
+                                    .append("g")
+                                    .attr("transform", 
+                                      "translate(" + margin.left + "," + margin.top + ")");
+
+                                var tooltip = d3.select("body")
+                                    .append("div")
+                                    .attr("class","tooltip")
+                                    .style("position", "absolute")
+                                    .style("z-index", "10")
+                                    .style("visibility", "hidden")
+                                    .style("color", "white")
+                                    .style("padding", "8px")
+                                    .style("background-color", "rgba(0, 0, 0, 0.75)")
+                                    .style("border-radius", "6px")
+                                    .style("font", "12px sans-serif")
+                                    .text("tooltip");
+
+                                data.forEach(function(d) {
+                                    d.score = +d.score;
+                                });
+
+                                console.log("DATA: ",data)
+
+                                x.domain([ d3.min(data, function(d){ return d.score; }) , d3.max(data, function(d){ return d.score; })])
+                                y.domain(data.map(function(d) { return d.neighborhood; }));
+
+                                var bars = svg.selectAll(".bar")
+                                    .data(data)
+                                    .enter()
+                                    .append("g")
+
+                                bars.append("rect")
+                                    .attr("class", "bar")
+                                    .attr("width", function(d) {return x(d.score); } )
+                                    .attr("x", 0)
+                                    .attr("y", function(d) { return y(d.neighborhood); })
+                                    .attr("height", y.bandwidth())
+                                    .style("cursor","pointer")
+                                    .style("fill","#A9A9A9")
+                                    .on("mouseover", function(d) {
+                                        tooltip.text(d.score + " Articles");
+                                        tooltip.style("visibility", "visible");
+                                    })
+                                    .on("mousemove", function() {
+                                        return tooltip.style("top", (d3.event.pageY-10)+"px").style("left",(d3.event.pageX+10)+"px");
+                                    })
+                                    .on("mouseout", function(){return tooltip.style("visibility", "hidden");});
+                                
+                                // add the x Axis
+                                svg.append("g")
+                                    .attr("transform", "translate(0," + height + ")")
+                                    .call(d3.axisBottom(x).ticks(5));
+
+                                //add a value label to the right of each bar
+                                bars.append("text")
+                                    .attr("id","list-text")
+                                    .attr("class", "label")
+                                    .attr("y", function (d) {
+                                        return y.bandwidth()/2 + y(d.neighborhood) ;
+                                    })
+                                    .attr("x", function (d) { return  3; })
+                                    .attr("dy", ".3em") 
+                                    .attr("text-anchor", "start")
+                                    .text(function (d) { return d.neighborhood; });
+
+
+
+                            }
 
                         },
 
@@ -102,14 +329,37 @@
                     });
                 });
 
-                function drawMap(data,ny) {
-                    var neighborhoods = [];
+                function drawMap(ny, output) {
+                    //console.log(output);
+
+                    var neighborhoods = [], outputDict = {};
+                    var colors = ['#fff7ec','#fee8c8','#fdd49e','#fdbb84','#fc8d59','#ef6548','#d7301f','#b30000','#7f0000'];
+
+                    for (let obj of output) {
+                        var neighborhood = obj[0], score = obj[1];
+                        outputDict[neighborhood.toLowerCase()] = score;
+                    }
+
+                    var tip = d3.tip()
+                        .attr('class', 'd3-tip')
+                        .offset([-10, 0])
+                        .html(function(d) {
+                            score = outputDict[(d.properties.neighbourhood).toLowerCase()]
+                            if(score){
+                                return "<span class='details'>" + d.properties.neighbourhood + "</span> <br>" +  score.toFixedDown(5);
+                            } else {
+                                return "<span class='details'>" + d.properties.neighbourhood + "</span> <br> 0.000";
+                            }
+                        })
 
                     var margin = {top: 5, right: 5, bottom: 5, left: 5};
-                    var width = 600 - margin.left - margin.right,
-                        height = 500 - margin.top - margin.bottom;
+                    var width = 550 - margin.left - margin.right,
+                        height = 400 - margin.top - margin.bottom;
 
-                    var nyfeatures = topojson.feature(ny,ny.objects.nyc)
+                    var nyfeatures = topojson.feature(ny,ny.objects.neighbourhoods),
+                        max_area   = d3.max( nyfeatures, function(d) { 
+                            return d.properties.neighbourhood });
+
                     var svg = d3.select("#map")
                         .append("svg")
                           .attr("class", "map")
@@ -117,32 +367,126 @@
                           .attr("height", height + margin.top + margin.bottom)
                         .append("g")
                         .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
                     var path = d3.geoPath()
                         .projection(d3.geoAlbersUsa()
                         .fitSize([width-margin.top, height-margin.top], nyfeatures));
+
+                    var minX = 0.0;
+
+                    for (let val of Object.values(outputDict)) {
+                        if(val < minX) minX = val
+                    }
+
+                    var color = d3.scaleQuantize()
+                            .domain([minX, Object.values(outputDict)[0]])
+                            .range(colors);
+
+                    svg.call(tip);
+
                     var nyPaths = svg.selectAll(".ny-neighborhoods")
                         .data(nyfeatures.features)
                         .enter().append("path")
                             .attr("class", "ny-neighborhoods")
+                            .attr("class","map-neighborhood")
+                            .attr("id", function(d) { return (d.properties.neighbourhood).toLowerCase(); })
                             .attr("d", function(d) { 
-                                neighborhoods.push(d.properties.NTAName);
+                                // neighborhoods.push(d.properties.NTAName);
                                 return path(d); 
                                 })
-                            .style("fill","white")
+                            .style("fill", function(d) {
+                                if(outputDict[(d.properties.neighbourhood).toLowerCase()]) {
+                                    return color(outputDict[(d.properties.neighbourhood).toLowerCase()]);
+                                } else {
+                                    return "#ddd";
+                                }
+                            })
+                            .on('mouseover',function(d){
+                              tip.show(d);
+                              d3.select(this)
+                                .style("stroke-width",1)
+                                .style("opacity","0.5")
+                            })
+                            .on('mouseout', function(d){
+                              tip.hide(d);
+                              d3.select(this)
+                                .style("stroke-width",0.3)
+                                .style("opacity","1");
+                            })
+                            .on("click", function(d) {
+                                console.log(currentCriteria);
+                                $(".placeInfo").empty();
+
+                                d3.selectAll(".text").remove();
+
+                                var place = (d.properties.neighbourhood).toLowerCase();
+
+                                var feedback = currentCriteria+"//name//"+place;
+
+                                $(".placeInfo").removeClass("hidden");
+
+                                $("#selectedPlace").append("<h3>" + (d.properties.neighbourhood) + "</h3>")
+
+                                svg.append("text")
+                                    .attr("class","text")
+                                    .attr("x",55)
+                                    .attr("y",100)
+                                    .attr("font-size","20px")
+
+                                    .text(d.properties.neighbourhood)
+
+                                $.ajax({
+                                    type: "GET",
+                                    url: "/",
+                                    contentType: "application/json",
+                                    dataType: "json",
+                                    data: {
+                                        search: "{{ search_params }}",
+                                        extra: feedback
+                                    },
+                                    success: function(response) {
+                                        console.log(response);
+                                        console.log("map success");
+                                        response = JSON.parse(response);
+                                        console.log(response)
+                                        var i = 1;
+                                        for (let entry of response) {
+                                            $(".placeInfo").append("<h3>Review " + i + ", Score: " + (entry[1]).toFixedDown(5) + "<h3> <p>" + entry[2] + " </p><hr>")
+                                            i++;
+                                        }
+
+                                    },
+
+                                    error: function(response) {
+                                        console.log("error");
+                                    }
+
+                                });
+
+                            })
 
                 }
 
+
+                Number.prototype.toFixedDown = function(digits) {
+                    var re = new RegExp("(\\d+\\.\\d{" + digits + "})(\\d)"),
+                        m = this.toString().match(re);
+                    return m ? parseFloat(m[1]) : this.valueOf();
+                };
             
             </script>
+
         {% endblock %}
 
         {% block content %}
+        
+                <div class="col-md-12 splash">
         
             <form class="form-inline global-search col-md-12" method='GET' data-url="{% url 'index' %}">
                 <h1> CribHub. </h1><br>
                 <div class="blurb">
                     <p>Query by city and what you desire in a neighborhood. Separate criteria by commas. <br> 
-                    Example: "New York, young professionals, affordable, bars nearby"</p>
+                    Example: "young professionals, affordable, bars nearby"</p>
                 </div>
                 
                 <br><br>
@@ -157,26 +501,81 @@
         {% endblock %}
 
 
-        <div class="col-md-12">
-            <div class="col-md-3"></div>
-            <div class="col-md-6 query-text"> Find Results For: </div> 
-            <div class="col-md-3"></div>
-        </div>
+    </div>
 
-        <div class="col-md-12">
-            <div class="col-md-3"></div>
-            <div class="col-md-6 user-query"></div> 
-            <div class="col-md-3"></div>
-        </div>
+    <div class="col-md-12 output-container">
 
-        <div class="col-md-12">
-            <div class="col-md-3"></div>
-            <div class="output hidden col-md-6">
+        <div class="output-content col-md-12">
+
+            <!-- HEADER BUTTONS -->
+
+            <div class="col-md-12">
+                <div class="col-md-10 query-text"> Find Results For: </div> 
+                <div class="col-md-2 back-to-search"> Back To Search </div> 
+            </div>
+
+            <!-- USER QUERY CRITERIA -->
+
+            <div class="col-md-12 query-button-container">
+                <div class="col-md-12 user-query"></div> 
+            </div>
+
+            <!-- RIGHT SIDE -->
+
+            <div class="col-md-6">
+
+                <!-- BAR CHART -->
+
                 <div class="search-results"></div>
-            </div> 
-            <div class="col-md-3"></div>
+
+                <!-- RE-QUERY FORM -->
+
+                <div class="requery-blurb col-md-12" style="margin-top:5%;margin-bottom:3%;">
+                    Help us make our recommendation system better! Below we provide a list of documents that were 
+                    deemed most relevant to your query by our system. Place a check next to the documents that you
+                    think are relevant and leaves the others empty. Then press the Go button to send modify your query.
+                </div>
+                
+                <div class="requery">
+
+                    <form class="form-inline requery-search" id="updateProfile">
+
+                        <fieldset class="checkboxes"></fieldset>
+
+                    </form>
+
+
+
+                    <div class="col-md-12">
+                        <div id="requery-btn" >Go</div>
+                    </div>
+
+
+                </div> 
+
+
+            </div>
+
+            <!-- LEFT SIDE OF PAGE -->
+
+            <div class="col-md-6">
+                
+                <div id="map" style="margin-top:-5%; "></div>
+                <div class="placeInfo col-md-12" style="border:solid 1px #ddd; height:300px; margin-top:-16.5%; overflow-y:scroll; font-size:14px !important; ">
+
+                </div>
+                <!-- <div class="placeInfo col-md-2"></div> -->
+            </div>
+
+            
+ 
+
+           
+
+
         </div>
 
+    </div>
 
 
         <!-- <div id="map" class="col-md-5" style="margin-top:-15%"></div> -->

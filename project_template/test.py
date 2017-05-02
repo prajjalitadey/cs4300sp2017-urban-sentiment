@@ -32,13 +32,27 @@ def find_similar(q):
 def original_query(q):
     d = inst.handle_query(q)
     jsonarray = json.dumps(d)
-    print("DONE WITH ORIGINAL QUERY")
-    print(len(jsonarray))
-    print("------------------------")
     return jsonarray
 
 
 def requery(q):
+    print("IN REQUERY")
+    new = json.loads(q)
+    print(new)
     d = inst.rocchio(q)
     jsonarray = json.dumps(d)
     return jsonarray
+
+
+def handle_click(neighborhood):
+    idx = neighborhood.find("//name//")
+    query = neighborhood[0:idx+8]
+    place = neighborhood[idx+8:]
+    query = query.replace("//name//","")
+    d = inst.get_neighborhood_information(query,place)
+    jsonarray = json.dumps(d)    
+    return jsonarray
+
+
+
+
