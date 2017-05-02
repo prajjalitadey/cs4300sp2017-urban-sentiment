@@ -67,7 +67,9 @@ def neighborhood_to_listing_ids():
         if(i % 1000 == 0):
             print(str(i)+" completed.")
         i += 1
-    return list(set(neighborhood_to_listing_ids))
+
+    new_dict = {neighborhood: list(set(listing_ids)) for neighborhood, listing_ids in neighborhood_to_listing_ids.iteritems()}
+    return new_dict
 
 
 # airbnb function
@@ -111,7 +113,7 @@ def nyt_id_to_review():
         if isinstance(review, basestring):
             review = UnicodeDammit(review).unicode_markup.encode("utf-8")
             neighborhood = getattr(row, 'neighborhood').lower()
-            review_id = getattr(row, 'review_id')
+            review_id = str(int(getattr(row, 'review_id')))
             nyt_id_to_review[review_id] = review
             nbhd_to_review[neighborhood].append(review_id)
             nyt_id_to_neighborhood[review_id] = neighborhood.lower()
@@ -153,13 +155,13 @@ def create_tfidf_matrix(doc_dict):
 
 if __name__ == '__main__':
 
-    #neighborhood_to_listing_ids = neighborhood_to_listing_ids()
-    #with open('neighborhood_to_listing_ids.json', 'w') as fp:
-    #json.dump(neighborhood_to_listing_ids, fp)
+    neighborhood_to_listing_ids = neighborhood_to_listing_ids()
+    with open('neighborhood_to_listing_ids.json', 'w') as fp:
+        json.dump(neighborhood_to_listing_ids, fp)
 
-    airbnb_listing_id_to_listing = listing_id_to_listing()
-    with open('airbnb_listing_id_to_listing.json', 'w') as fp:
-        json.dump(airbnb_listing_id_to_listing, fp)
+    # airbnb_listing_id_to_listing = listing_id_to_listing()
+    # with open('airbnb_listing_id_to_listing.json', 'w') as fp:
+    #     json.dump(airbnb_listing_id_to_listing, fp)
 
     # airbnb_tfidf, airbnb_idx_to_id, airbnb_id_to_idx = create_tfidf_matrix(airbnb_listing_id_to_listing)
     #    with open('airbnb_tfidf.json', 'w') as fp:
