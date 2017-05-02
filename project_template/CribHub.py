@@ -249,11 +249,10 @@ class CribHub:
             top_neighborhood = nbhd_scores_list[0][0]
 
             # get listing ids for top neighborhood only
-            query_svd = self.get_query_svd(criteria, self.airbnb_word_to_index, self.airbnb_idf_values, self.airbnb_words_compressed)
-            airbnb_listing_ids = self.neighborhood_to_listing_ids[top_neighborhood]
-            airbnb_listing_ids = list(set(airbnb_listing_ids))
+            airbnb_listing_ids = list(set(self.neighborhood_to_listing_ids[top_neighborhood]))
 
             # listing_ids = self.airbnb_id_to_idx.keys()
+            query_svd = self.get_query_svd(criteria, self.airbnb_word_to_index, self.airbnb_idf_values, self.airbnb_words_compressed)
             listing_text = self.get_text(airbnb_listing_ids)
             for lid, text in listing_text:
                 listing_score = self.get_listing_score(query_svd, str(lid))
