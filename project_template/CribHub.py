@@ -185,15 +185,15 @@ class CribHub:
         #Otherwise, the topic modeling will zero out the other scores.
         
         topic_neighborhood_scores = all_neighborhood_scores
-#        topic_neighborhood_scores={}
-#        if topic_neighborhoods == None:
-#            topic_neighborhood_scores = all_neighborhood_scores
-#        else:
-#            for neighborhood in all_neighborhood_scores.keys():
-#                if neighborhood in topic_neighborhoods:
-#                    topic_neighborhood_scores[neighborhood] = all_neighborhood_scores[neighborhood]
-#                else:
-#                    topic_neighborhood_scores[neighborhood] = [(0,0)]
+        topic_neighborhood_scores={}
+        if topic_neighborhoods == None:
+            topic_neighborhood_scores = all_neighborhood_scores
+        else:
+            for neighborhood in all_neighborhood_scores.keys():
+                if neighborhood in topic_neighborhoods:
+                    topic_neighborhood_scores[neighborhood] = all_neighborhood_scores[neighborhood]
+                else:
+                    topic_neighborhood_scores[neighborhood] = [(0,0)]
 
         for neighborhood, scores in topic_neighborhood_scores.iteritems():  # scores is a list of tuples with id, score
             #print(neighborhood)
@@ -350,6 +350,7 @@ class CribHub:
         if not indexes:
             return None
 
+
         #Adding all the query words together
         vec = np.zeros(10)
         for topic in indexes:
@@ -357,7 +358,14 @@ class CribHub:
         print(vec)
         #Checking if all values in vector are same if so we retun None
         topic = str(np.argmax(vec))
+        if topic == '6':
+            print("here")
+            return None
+        
         print(type(self.topic_to_neighborhoods[topic]))
+        print(topic)
+        for neighborhoods in self.topic_to_neighborhoods.values():
+            print(len(neighborhoods))
         return self.topic_to_neighborhoods[topic]
 
 
@@ -383,7 +391,7 @@ class CribHub:
             return rows
         except (Exception, psycopg2.DatabaseError) as error:
             print(error)
-            self.conn._rollback()
+            self.conn.rollback()
 
 
 if __name__ == '__main__':
@@ -392,6 +400,6 @@ if __name__ == '__main__':
     cribhub = CribHub()
     # print ("AWS Loaded")
 
-    m = cribhub.handle_query("bars nearby subway")
+    m = cribhub.handle_query("wall street")
     print(m['neighborhood_ranking'])
     # print(cribhub.get_text([2515]))#
