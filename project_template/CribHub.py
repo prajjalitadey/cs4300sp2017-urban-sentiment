@@ -281,19 +281,19 @@ class CribHub:
             query_svd = self.get_query_svd(criteria, self.airbnb_word_to_index, self.airbnb_idf_values, self.airbnb_words_compressed)
             listing_text = self.get_text(airbnb_listing_ids)
 
-            listing_ranking = []
+            airbnb_ranking = []
             if listing_text:
                 for lid, text in listing_text:
+                    # split into reviews
                     listing_score = self.get_listing_score(query_svd, str(lid))
+
                     if query_label != "neutral":
                         listing_score = self.sentiment_score(listing_score, query_label, text)
                     if criteria == query:
                         criteria = 'all_criteria'
-                #   listing_ranking[criteria].append([lid, listing_score, text])
-                #   listing_ranking[criteria] = sorted(listing_ranking[criteria], key=lambda x: x[1], reverse=True)
 
                     nbhd_rank = nbhd_ranks[self.listing_id_to_neighborhood[str(lid)]]
-                    listing_ranking.append(['airbnb', nbhd_rank, lid, listing_score, text])
+                    airbnb_ranking.append(['airbnb', nbhd_rank, lid, listing_score, text])
 
             # get all review scores
             query_svd = self.get_query_svd(criteria, self.nytimes_word_to_index, self.nytimes_idf_values, self.nytimes_words_compressed)
@@ -303,13 +303,17 @@ class CribHub:
                 nbhd_rank = nbhd_ranks[self.nytimes_id_to_neighborhood[rid]]
                 review_ranking.append(['nytimes', nbhd_rank, rid, review_score, text])
 
-            documents = sorted(listing_ranking + review_ranking, key=lambda x: x[3], reverse=True)
-            documents = sorted(documents, key=lambda x: x[1])
+            documents = sorted(airbnb_ranking + review_ranking, key=lambda x: x[3], reverse=True)
+            documents = sorted(documents, key=lambda x: x[1])[:10]
+
+            # documents --- mix of airbnb & nytimes
+            documents = [[doc[0], doc[1], doc[2], doc[3], doc[4], TEXT] if doc[0] is 'airbnb' else [doc[0], doc[1], doc[2], doc[3], doc[4], doc[5]] for doc in documents]
+
 
             if criteria is query:
                 criteria = 'all_criteria'
             neighborhood_ranking[criteria] = nbhd_scores
-            document_ranking[criteria] = documents[:10]
+            document_ranking[criteria] = documents
 
         return {'neighborhood_ranking': neighborhood_ranking, 'document_ranking': document_ranking, 'query': query}
 
