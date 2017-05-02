@@ -322,6 +322,7 @@ class CribHub:
 
         return {'neighborhood_ranking': neighborhood_ranking, 'document_ranking': document_ranking, 'query': query}
 
+
     def sentiment_score(self, score, query_label, text):
         result = self.get_sentiment(text)
         if result['label'] == 'neutral':
@@ -330,6 +331,7 @@ class CribHub:
             return (1 + result['probability'][result['label']]) * score
         else:
             return (1 - result['probability'][result['label']]) * score
+
 
     def rocchio(self, q, rel, irr, a=.4, b=15, c=10, clip=True):
         airbnb_wt = 0.8
@@ -443,10 +445,7 @@ class CribHub:
         vec = np.zeros(10)
         for topic in indexes:
             vec += self.topic_matrix[:, topic]
-        #print(vec)
-        #Checking if all values in vector are same if so we retun None
-        #topic = str(np.argmax(vec))
-        #print(type(self.topic_to_neighborhoods[topic]))
+
         #Checking if all values in vector are same if so we retun None
         topic = str(np.argmax(vec))
         if topic == '6':
@@ -538,3 +537,4 @@ class CribHub:
 #             print (item[4])
 #             print ('\n')
 # >>>>>>> 0107c77f969d15663b90f49624f5bfce3c816be6
+
