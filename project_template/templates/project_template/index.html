@@ -41,7 +41,7 @@
                         },
                         success: function(response) {
                             console.log(response);
-
+/*
                             var resultsDict   = JSON.parse(response),
                                 defaultOutput = resultsDict["All"],
                                 queryText     = resultsDict["QUERY"][0]
@@ -58,7 +58,7 @@
                                 $(".user-query").removeClass("hidden");
                             }
 
-                            /* Button UI */
+                            //
                             var queryCriteria = queryText.split(",")
                                 queryCriteria.push("All")
                             for (let criteria of queryCriteria) {
@@ -82,7 +82,7 @@
                                 }
                             });
 
-                            /* Append output to div. */
+                            // Append output to div. 
                             for (var i = 1 ; i < 10 ; i++) {
                                 var obj = defaultOutput[i];
                                 $(".search-results").append("<p>" + i + ". <span class='neighborhood-name'>" + obj[0] + "</span>, " + Number((parseFloat(obj[1])).toFixed(4)) +"</p>"); 
@@ -91,6 +91,8 @@
                             // d3.json("/static/map_data/newyork.json",function(data){
                             //     drawMap(response,data);
                             // })
+
+*/
 
                         },
 

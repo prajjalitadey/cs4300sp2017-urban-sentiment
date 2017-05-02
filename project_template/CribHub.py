@@ -132,6 +132,7 @@ class CribHub:
 
 
     def get_listing_score(self, query_svd, listing_id):
+        listing_id = "13571116";
         idx = self.airbnb_id_to_idx[listing_id]
         tfidf_svd = np.array(self.airbnb_tfidf_svd[idx])
         return tfidf_svd.dot(query_svd)
@@ -260,6 +261,7 @@ class CribHub:
                 review_ranking[criteria].append([rid, review_score, text])
             review_ranking[criteria] = sorted(listing_ranking[criteria], key=lambda x: x[1], reverse=True)
 
+        print("DONE WITH HANDLE QUERY")
         return {'neighborhood_ranking': neighborhood_ranking, 'listing_ranking': listing_ranking, 'review_ranking': review_ranking, 'query': query}
 
 
@@ -356,4 +358,4 @@ if __name__ == '__main__':
     cribhub = CribHub()
     # print ("AWS Loaded")
 #     m = cribhub.handle_query(query)
-    print(cribhub.get_text([2515]))
+    #print(cribhub.get_text([2515]))
