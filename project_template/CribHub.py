@@ -221,16 +221,17 @@ class CribHub:
         a = 0.5
         b = 0.5
 
+        # neighborhoods
         airbnb = set(airbnb_scores.keys())
         nytimes = set(nytimes_scores.keys())
-
+        all_neighorhoods = airbnb.union(nytimes)
         both = airbnb.intersection(nytimes)
         airbnb_only = airbnb - both
         nytimes_only = nytimes - both
 
         neighborhood_to_score = {}
 
-        # neighborhood in both airbnb & nytimes
+        # neighborhood in both airbnb & nytimes -- CLEAN THIS
         for nbhd in both:
             neighborhood_to_score[nbhd] = a*airbnb_scores[nbhd] + b*nytimes_scores[nbhd]
         # only airbnb neighborhoods
@@ -239,6 +240,11 @@ class CribHub:
         # only nytimes neighborhoods
         for nbhd in nytimes_only:
             neighborhood_to_score[nbhd] = b*nytimes_scores[nbhd]
+            self.neighborhood_to_listing_ids[nbhd] = []
+
+        # edit airbnb_scores --- neighborhood_to_listing_ids
+
+        # edit nytimes_scores
 
         return neighborhood_to_score
 
@@ -332,7 +338,7 @@ class CribHub:
         indexes = [self.word_to_top_index[q] for q in query_words if q in self.word_to_top_index]
         if not indexes:
             return None
-        
+
         #Adding all the query words together
         vec = np.zeros(10)
         for topic in indexes:
