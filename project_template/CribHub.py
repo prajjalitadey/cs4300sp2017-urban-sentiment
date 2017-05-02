@@ -473,6 +473,9 @@ class CribHub:
     def neighborhood_information(self, query, neighborhood):
         query_svd = self.get_query_svd(query, self.airbnb_word_to_index, self.airbnb_idf_values, self.airbnb_words_compressed)
         listing_ids = self.neighborhood_to_listing_ids[neighborhood]
+        return self.listings_to_best_reviews(query_svd, listing_ids)
+    
+    def listings_to_best_reviews(self, query_svd, listing_ids):
         listings_to_score = [(listing, self.get_listing_score(query_svd, str(listing))) for listing in listing_ids]
         best_five, _ = zip(*sorted(listings_to_score, key = lambda x: x[1], reverse = True)[:5])
         all_reviews = self.get_text(best_five, separated=True)
@@ -483,6 +486,14 @@ class CribHub:
         review_scores = [(listingid, query_svd.dot(review_svd) / la.norm(review_svd), review) for listingid, review_svd, review in reviews_svd]
         top_reviews = sorted(review_scores, key = lambda x: x[1], reverse = True)[:10]
         return top_reviews #, sorted_sentiment_reviews[10:], sorted_sentiment_reviews[:10]
+    
+    def get_best_review_for_text(self, query_svd, listing_id, text):
+        reviews = text.split("-----")
+        reviews_svd = [(review, self.get_query_svd(review, self.airbnb_word_to_index, self.airbnb_idf_values, self.airbnb_words_compressed)) for review in reviews]
+        review_scores = [(query_svd.dot(review_svd) / la.norm(review_svd), review) for review in reviews_svd]
+        top_review = sorted(review_scores, key = lambda x: x[1], reverse = True)[0]
+        return top_review
+        
     
 
 if __name__ == '__main__':
