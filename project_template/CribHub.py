@@ -307,7 +307,7 @@ class CribHub:
             documents = sorted(documents, key=lambda x: x[1])[:10]
 
             # replace full listing text for best review, for airbnb docs
-            documents = [[doc[0], doc[1], doc[2], doc[3], self.get_best_review_for_text(airbnb_query_svd, doc[4])[0]] if doc[0] is 'airbnb' else [doc[0], doc[1], doc[2], doc[3], doc[4]] for doc in documents]
+            documents = [[doc[0], doc[1], doc[2], doc[3], re.sub('\\.', '', self.get_best_review_for_text(airbnb_query_svd, doc[4])[0])] if doc[0] is 'airbnb' else [doc[0], doc[1], doc[2], doc[3], re.sub('\\.', '', doc[4])] for doc in documents]
 
             if criteria is query:
                 criteria = 'all_criteria'
@@ -317,7 +317,7 @@ class CribHub:
         return {'neighborhood_ranking': neighborhood_ranking, 'document_ranking': document_ranking, 'query': query}
 
     def sentiment_score(self, score, query_label, text):
-        result = get_sentiment(text)
+        result = self.get_sentiment(text)
         if result['label'] == 'neutral':
             return score
         if result['label'] == query_label:
@@ -416,7 +416,7 @@ class CribHub:
         documents = sorted(listing_ranking + review_ranking, key=lambda x: x[1])
         documents = sorted(documents, key=lambda x: x[3], reverse=True)
 
-        documents = [[doc[0], doc[1], doc[2], doc[3], self.get_best_review_for_text(self, airbnb_query_svd, doc[4])[0]] if doc[0] is 'airbnb' else [doc[0], doc[1], doc[2], doc[3], doc[4]] for doc in documents]
+        documents = [[doc[0], doc[1], doc[2], doc[3], re.sub('\\.', '', self.get_best_review_for_text(self, airbnb_query_svd, doc[4])[0])] if doc[0] is 'airbnb' else [doc[0], doc[1], doc[2], doc[3], re.sub('\\.', '', doc[4])] for doc in documents]
 
 
         neighborhood_ranking[query] = nbhd_scores
@@ -451,8 +451,12 @@ class CribHub:
     # Output: dictionary
     # Output structure: {'probability':{u'neg':0.0222, u'neutral':0.1134, u'pos':0.7183}, u'label':u'pos'}
     def get_sentiment(self, content):
+        content = content[:5000]
         r = requests.post("http://text-processing.com/api/sentiment/", {"text": content})
+        print (r.status_code)
+        print (r.text)
         results = json.loads(r.text)
+
         return results
 
     # Put in a list of listing_ids you want to get text for
