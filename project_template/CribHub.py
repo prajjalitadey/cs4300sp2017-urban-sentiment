@@ -166,8 +166,12 @@ class CribHub:
         return np.array(query_svd.T)[0]
 
 
-    def score_airbnb_neighborhoods(self, query):
-        query_svd = self.get_query_svd(query, self.airbnb_word_to_index, self.airbnb_idf_values, self.airbnb_words_compressed)
+    def score_airbnb_neighborhoods(self, query, vec=False):
+        if not vec:
+            query_svd = self.get_query_svd(query, self.airbnb_word_to_index, self.airbnb_idf_values, self.airbnb_words_compressed)
+        else:
+            query_svd = query
+
         all_neighborhood_scores = defaultdict(list)  # dict= neighborhood:[(listing1,score1), (listing2,score2)...]
 
         for listing_id in self.airbnb_id_to_idx.keys():  # going through all the listing ids
@@ -178,40 +182,22 @@ class CribHub:
 
         neighborhood_to_score = {}
         topic_neighborhoods = self.topic_modeling(query)
-<<<<<<< HEAD
+
 
         ### If the query gives None in topic model it means it was not in the index.
         ### If this is the case, then it will just return the original scores
         ### Otherwise, the topic modeling will zero out the other scores.
         topic_neighborhood_scores = {}
         if topic_neighborhoods is None:
-=======
-        print(topic_neighborhoods)
-        #If the query gives None in topic model it means it was not in the index.
-        #If this is the case, then it will just return the original scores
-        #Otherwise, the topic modeling will zero out the other scores.
-        
-        topic_neighborhood_scores = all_neighborhood_scores
-        topic_neighborhood_scores={}
-        if topic_neighborhoods == None:
->>>>>>> 0dba7c0ed4ff96f0a3c29f5c04acf3fc3aa18be6
             topic_neighborhood_scores = all_neighborhood_scores
         else:
             for neighborhood in all_neighborhood_scores.keys():
                 if neighborhood in topic_neighborhoods:
                     topic_neighborhood_scores[neighborhood] = all_neighborhood_scores[neighborhood]
                 else:
-<<<<<<< HEAD
                     topic_neighborhood_scores[neighborhood] = [(0, 0)]
 
         for neighborhood, scores in topic_neighborhood_scores.iteritems():
-=======
-                    topic_neighborhood_scores[neighborhood] = [(0,0)]
-
-        for neighborhood, scores in topic_neighborhood_scores.iteritems():  # scores is a list of tuples with id, score
-            #print(neighborhood)
-            #print(scores)
->>>>>>> 0dba7c0ed4ff96f0a3c29f5c04acf3fc3aa18be6
             score_avg = np.mean([score[1] for score in scores])
             neighborhood_to_score[neighborhood] = score_avg
         #   print(score_avg)
@@ -219,8 +205,12 @@ class CribHub:
         return neighborhood_to_score
 
 
-    def score_nytimes_neighborhoods(self, query):
-        query_svd = self.get_query_svd(query, self.nytimes_word_to_index, self.nytimes_idf_values, self.nytimes_words_compressed)
+    def score_nytimes_neighborhoods(self, query, vec=False):
+        if not vec:
+            query_svd = self.get_query_svd(query, self.nytimes_word_to_index, self.nytimes_idf_values, self.nytimes_words_compressed)
+        else:
+            query_svd = query
+
         all_neighborhood_scores = defaultdict(list)
 
         for review_id in self.nytimes_id_to_idx.keys():
@@ -319,7 +309,7 @@ class CribHub:
 
 
 
-    def rocchio(self, q, airbnb_rel, airbnb_irr, nytimes_rel, nytimes_irr, a=.7, b=.5, c=.5, clip=True):
+    def rocchio(self, q, rel, irr, a=.7, b=.5, c=.5, clip=True):
         airbnb_wt = 0.8
         nytimes_wt = 0.2
 
@@ -332,27 +322,78 @@ class CribHub:
         return self.handle_query(q_new)
         """
 
+        # separate airbnb & nytimes relevant and irrelevant docs
+        airbnb_rel = [doc[2] if doc[0] is 'airbnb' for doc in rel]
+        airbnb_irr = [doc[2] if doc[0] is 'airbnb' for doc in irr]
+        nytimes_rel = [doc[2] if doc[0] is 'nytimes' for doc in rel]
+        nytimes_irr = [doc[2] if doc[0] is 'nytimes' for doc in irr]
+
+        # airbnb list of vectors
         airbnb_rel_vecs = [self.airbnb_tfidf_svd[self.airbnb_id_to_idx[aid]] for aid in airbnb_rel]
         airbnb_rel_avg = np.array(airbnb_rel_vecs).mean(0)
         airbnb_irr_vecs = [self.airbnb_tfidf_svd[self.airbnb_id_to_idx[aid]] for aid in airbnb_irr]
         airbnb_irr_avg = np.array(airbnb_irr_vecs).mean(0)
+
+        # new airbnb q_mod
+        airbnb_query_vec = self.get_query_svd(q, self.airbnb_word_to_index, self.airbnb_idf_values, self.airbnb_words_compressed)
+        airbnb_q_mod = a*airbnb_query_vec + b*airbnb_rel_avg - c*airbnb_irr_avg
+
+        # nytimes list of vectors
         nytimes_rel_vecs = [self.nytimes_tfidf_svd[self.nytimes_id_to_idx[nid]] for nid in nytimes_rel]
         nytimes_rel_avg = np.array(nytimes_rel_vecs).mean(0)
         nytimes_irr_vecs = [self.nytimes_tfidf_svd[self.nytimes_id_to_idx[nid]] for nid in nytimes_irr]
         nytimes_irr_avg = np.array(nytimes_irr_vecs).mean(0)
 
-        rel_avg = airbnb_wt*airbnb_rel_avg + nytimes_wt*nytimes_rel_avg
-        irrel_avg = airbnb_wt*airbnb_irr_avg + nytimes_wt*nytimes_irr_avg
-
-        query_vec = self.get_query_svd(q, self.airbnb_word_to_index, self.airbnb_idf_values, self.airbnb_words_compressed)
-        q_mod = a*query_vec + b*rel_avg - c*irrel_avg
+        # new nytimes q_mod
+        nytimes_query_vec = self.get_query_svd(q, self.nytimes_word_to_index, self.nytimes_idf_values, self.nytimes_words_compressed)
+        nytimes_q_mod = a*nytimes_qmod + b*nytimes_rel_avg - c*nytimes_irr_avg
 
         if clip:
-            for weight in np.nditer(q_mod, op_flags=['readwrite']):
-                if weight < 0:
-                    weight[...] = 0
+            for abnb_weight in np.nditer(airbnb_q_mod, op_flags=['readwrite']):
+                if abnb_weight < 0:
+                    abnb_weight[...] = 0
+            for nyt_weight in np.nditer(airbnb_q_mod, op_flags=['readwrite']):
+                if nyt_weight < 0:
+                    nyt_weight[...] = 0
 
-        return self.handle_query(q_mod)
+
+        ###### handling query again
+        scores = self.combine_scores(self.score_airbnb_neighborhoods(airbnb_q_mod, vec=True), self.score_nytimes_neighborhoods(nytimes_q_mod, vec=True))
+
+        nbhd_scores = sorted([[nbhd, score] for nbhd, score in scores.iteritems()], key=lambda x: x[1], reverse=True)
+        nbhd_scores_enum = list(enumerate(nbhd_scores))
+        nbhd_ranks = {nbhd[0]: rank for rank, nbhd in nbhd_scores_enum}
+
+        # get listing ids for top neighborhoods only
+        nested_list = [self.neighborhood_to_listing_ids[nbhd[0]] for nbhd in nbhd_scores[:5]]
+        airbnb_listing_ids = list(set([lid for sublist in nested_list for lid in sublist]))
+
+        # listing_ids = self.airbnb_id_to_idx.keys()
+        listing_text = self.get_text(airbnb_listing_ids)
+
+        listing_ranking = []
+        if listing_text:
+            for lid, text in listing_text:
+                listing_score = self.get_listing_score(airbnb_query_vec, str(lid))
+                nbhd_rank = nbhd_ranks[self.listing_id_to_neighborhood[str(lid)]]
+                listing_ranking.append(['airbnb', nbhd_rank, lid, listing_score, text])
+
+
+        # get all review scores
+        review_ranking = []
+        for rid, text in self.nytimes_id_to_review.iteritems():
+            review_score = self.get_review_score(nytimes_query_vec, rid)
+            nbhd_rank = nbhd_ranks[self.nytimes_id_to_neighborhood[rid]]
+            review_ranking.append(['nytimes', nbhd_rank, rid, review_score, text])
+
+        documents = sorted(listing_ranking + review_ranking, key=lambda x: x[1])
+        documents = sorted(documents, key=lambda x: x[3], reverse=True)
+        neighborhood_ranking[criteria] = nbhd_scores
+        document_ranking[criteria] = documents[:10]
+
+        return {'neighborhood_ranking': neighborhood_ranking, 'document_ranking': document_ranking, 'query': q}
+
+
 
 
     # Returns nothing if word is not found in topic model
@@ -361,7 +402,6 @@ class CribHub:
         indexes = [self.word_to_top_index[q] for q in query_words if q in self.word_to_top_index]
         if not indexes:
             return None
-
 
         #Adding all the query words together
         vec = np.zeros(10)
