@@ -95,7 +95,7 @@ class CribHub:
         #word to index mapping to convert query to tfidf vector (dictionary)
         file = urllib2.urlopen('https://s3.amazonaws.com/cribble0108/nytimes_word_to_index.json')
         self.nytimes_word_to_index = json.load(file, encoding='utf8')
-        #neighborhood to listing_ids (dictionary)
+        #neighborhood to review_ids (dictionary)
         # file = urllib2.urlopen('https://s3.amazonaws.com/cribble0108/nyt_nbhd_to_review.json')
         # self.nytimes_nbhd_to_review = json.load(file, encoding='utf8')
         #listing_id to neighborhood
@@ -245,15 +245,14 @@ class CribHub:
             scores = self.combine_scores(self.score_airbnb_neighborhoods(criteria), self.score_nytimes_neighborhoods(criteria))
             nbhd_scores_list = sorted([[nbhd, score] for nbhd, score in scores.iteritems()], key=lambda x: x[1], reverse=True)
             neighborhood_ranking[criteria] = nbhd_scores_list
-            tup = nbhd_scores_list[0]
-            top_neighborhood = tup[0]
+            top_neighborhood = nbhd_scores_list[0][0]
 
             # get listing ids for top neighborhood only
             query_svd = self.get_query_svd(criteria, self.airbnb_word_to_index, self.airbnb_idf_values, self.airbnb_words_compressed)
-            listing_ids = self.neighborhood_to_listing_ids[top_neighborhood]
+            airbnb_listing_ids = self.neighborhood_to_listing_ids[top_neighborhood]
 
             # listing_ids = self.airbnb_id_to_idx.keys()
-            listing_text = self.get_text(listing_ids)
+            listing_text = self.get_text(airbnb_listing_ids)
             for lid, text in listing_text:
                 listing_score = self.get_listing_score(query_svd, str(lid))
                 if criteria == query:
@@ -268,7 +267,7 @@ class CribHub:
                 if criteria == query:
                     criteria = 'all_criteria'
                 review_ranking[criteria].append([rid, review_score, text])
-            review_ranking[criteria] = sorted(listing_ranking[criteria], key=lambda x: x[1], reverse=True)
+            review_ranking[criteria] = sorted(review_ranking[criteria], key=lambda x: x[1], reverse=True)
 
         # 'listing_ranking': listing_ranking,
         return {'neighborhood_ranking': neighborhood_ranking, 'listing_ranking': listing_ranking, 'review_ranking': review_ranking, 'query': query}
