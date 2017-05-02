@@ -182,15 +182,8 @@ class CribHub:
             all_neighborhood_scores[neighborhood].append((listing_id, score_info))
 
         neighborhood_to_score = {}
-<<<<<<< HEAD
+
         topic_neighborhoods = self.topic_modeling(query)
-        #print(topic_neighborhoods)
-        #If the query gives None in topic model it means it was not in the index.
-        #If this is the case, then it will just return the original scores
-        #Otherwise, the topic modeling will zero out the other scores.
-        
-=======
->>>>>>> 0107c77f969d15663b90f49624f5bfce3c816be6
         topic_neighborhood_scores = all_neighborhood_scores
         
         if not vec:
