@@ -469,6 +469,9 @@ class CribHub:
     def neighborhood_information(self, query, neighborhood):
         query_svd = self.get_query_svd(query, self.airbnb_word_to_index, self.airbnb_idf_values, self.airbnb_words_compressed)
         listing_ids = self.neighborhood_to_listing_ids[neighborhood]
+        return self.listings_to_best_reviews(query_svd, listing_ids)
+    
+    def listings_to_best_reviews(self, query_svd, listing_ids):
         listings_to_score = [(listing, self.get_listing_score(query_svd, str(listing))) for listing in listing_ids]
         best_five, _ = zip(*sorted(listings_to_score, key = lambda x: x[1], reverse = True)[:5])
         all_reviews = self.get_text(best_five, separated=True)
