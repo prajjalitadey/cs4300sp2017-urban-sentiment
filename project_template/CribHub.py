@@ -173,9 +173,24 @@ class CribHub:
             neighborhood = self.listing_id_to_neighborhood[listing_id]
             score_info = self.get_listing_score(query_svd, listing_id)
             all_neighborhood_scores[neighborhood].append((listing_id, score_info))
-
+        
         neighborhood_to_score = {}
-        for neighborhood, scores in all_neighborhood_scores.iteritems():  # scores is a list of tuples with id, score
+        topic_neighborhoods = self.topic_modeling(query)
+        
+        ### If the query gives None in topic model it means it was not in the index.
+        ### If this is the case, then it will just return the original scores
+        ### Otherwise, the topic modeling will zero out the other scores.
+        topic_neighborhood_scores = {}
+        if topic_neighborhoods == None:
+            topic_neighborhood_scores = all_neighborhood_scores
+        else:
+            for neighborhood in all_neighborhood_scores.keys():
+                if neighborhood in topic_neighborhoods:
+                    topic_neighborhood_scores[neighborhood] = all_neighborhood_scores[neighborhood]
+                else:
+                    topic_neighborhood_scores[neighborhood] = [(0, 0)]
+        
+        for neighborhood, scores in topic_neighborhood_scores.iteritems():  # scores is a list of tuples with id, score
             score_avg = np.mean([score[1] for score in scores])
             neighborhood_to_score[neighborhood] = score_avg
 
@@ -314,23 +329,18 @@ class CribHub:
     def topic_modeling(self, query):
         query_words = query.split(" ")
         indexes = [self.word_to_top_index[q] for q in query_words if q in self.word_to_top_index]
-
+        if not indexes:
+            return None
+        
         #Adding all the query words together
-        vec = np.zeroes(10)
+        vec = np.zeros(10)
         for topic in indexes:
-            vec += self.topic_matrix[:, indexes]
+            vec += self.topic_matrix[:, topic]
 
         #Checking if all values in vector are same if so we retun None
-        usetopic = False
-        value = vec[0]
-        for i in range(len(vec)):
-            if vec[0] != value:
-                usetopic = True
-        if usetopic:
-            topic = np.argmax(vec)
-            return self.topic_to_neighborhoods[topic]
-        else:
-            return None
+        topic = str(np.argmax(vec))
+        return self.topic_to_neighborhoods[topic]
+
 
 
     # Returns sentiment from Lillian Lee's text-processing API: http://text-processing.com/docs/sentiment.html
@@ -354,6 +364,7 @@ class CribHub:
             return rows
         except (Exception, psycopg2.DatabaseError) as error:
             print(error)
+            conn._rollback()
 
 
 if __name__ == '__main__':
