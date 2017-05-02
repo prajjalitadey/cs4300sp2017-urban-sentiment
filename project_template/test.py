@@ -36,9 +36,7 @@ def original_query(q):
 
 
 def requery(q):
-    print("IN REQUERY")
     new = json.loads(q)
-    print(new)
     d = inst.rocchio(q)
     jsonarray = json.dumps(d)
     return jsonarray

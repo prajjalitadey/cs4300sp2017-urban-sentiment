@@ -468,12 +468,13 @@ class CribHub:
     # Put in a list of listing_ids you want to get text for
     # Gets out a list of tuples of form [(listing_id, review)]
 
-    # If seperated is True then it returns 
+
     def get_text(self, listing_ids, separated=False):
         """ query parts from the parts table """
         try:
             placeholders = ", ".join(str(lid) for lid in listing_ids)
             query = "SELECT * FROM listingid_to_text_sep WHERE listing_id IN (%s)" % placeholders
+
             self.cur.execute(query)
             rows = self.cur.fetchall()
             if separated:
@@ -500,6 +501,7 @@ class CribHub:
         return top_reviews #, sorted_sentiment_reviews[10:], sorted_sentiment_reviews[:10]
           
 
+
     def neighborhood_information(self, query, neighborhood):
         query_svd = self.get_query_svd(query, self.airbnb_word_to_index, self.airbnb_idf_values, self.airbnb_words_compressed)
         listing_ids = self.neighborhood_to_listing_ids[neighborhood]
@@ -522,19 +524,4 @@ class CribHub:
         top_review = sorted(review_scores, key=lambda x: x[1], reverse=True)[0]
         return top_review
 
-
-# <<<<<<< HEAD
-#     m = cribhub.handle_query("bars nearby subway")
-#     #print(m['neighborhood_ranking'])
-#     # print(cribhub.get_text([2515]))#
-# =======
-# if __name__ == '__main__':
-#     inst = CribHub()
-#     query = "bars nearby, safe"
-#     results = inst.handle_query(query)
-#     for item in results['document_ranking']['all_criteria']:
-#         if item[0] is 'airbnb':
-#             print (item[4])
-#             print ('\n')
-# >>>>>>> 0107c77f969d15663b90f49624f5bfce3c816be6
 

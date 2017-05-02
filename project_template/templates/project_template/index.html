@@ -156,7 +156,9 @@
                             $("#requery-btn").on("click", function() {
 
                                 feedback = {"relevant":[],"irrelevant":[],"query":currentCriteria};
+
                                 if(topListings) {
+
 
                                 for (var i = 0 ; i < 10 ; i++) {
                                     var listingNumber = i+1,
@@ -169,6 +171,7 @@
                                         } else {
                                             feedback["irrelevant"].push(listingText[0]);
                                         }
+
                                     }
                                 }
 
@@ -196,6 +199,7 @@
                                 });
 
                                 }
+
 
                             })
 
@@ -316,8 +320,6 @@
                                     .attr("dy", ".3em") 
                                     .attr("text-anchor", "start")
                                     .text(function (d) { return d.neighborhood; });
-
-
 
                             }
 
