@@ -483,6 +483,14 @@ class CribHub:
         top_reviews = sorted(review_scores, key = lambda x: x[1], reverse = True)[:10]
         return top_reviews #, sorted_sentiment_reviews[10:], sorted_sentiment_reviews[:10]
     
+    def get_best_review_for_text(self, query_svd, listing_id, text):
+        reviews = text.split("-----")
+        reviews_svd = [(review, self.get_query_svd(review, self.airbnb_word_to_index, self.airbnb_idf_values, self.airbnb_words_compressed)) for review in reviews]
+        review_scores = [(query_svd.dot(review_svd) / la.norm(review_svd), review) for review in reviews_svd]
+        top_review = sorted(review_scores, key = lambda x: x[1], reverse = True)[0]
+        return top_review
+        
+    
 
 if __name__ == '__main__':
 #     query = "port authority"
