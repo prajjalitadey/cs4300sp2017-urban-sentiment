@@ -164,7 +164,6 @@ class CribHub:
             query_svd = query_svd/1
         else:
             query_svd = query_svd/denominator
-        print(np.array(query_svd.T)[0])
         return np.array(query_svd.T)[0]
 
 
@@ -179,10 +178,28 @@ class CribHub:
             neighborhood = self.listing_id_to_neighborhood[listing_id]
             score_info = self.get_listing_score(query_svd, listing_id)
             all_neighborhood_scores[neighborhood].append((listing_id, score_info))
+        
         neighborhood_to_score = {}
-        #topic_neighborhoods = self.topic_modeling(query)
-
         topic_neighborhood_scores = all_neighborhood_scores
+
+        if not vec:
+            topic_neighborhoods = self.topic_modeling(query)
+            ### If the query gives None in topic model it means it was not in the index.
+            ### If this is the case, then it will just return the original scores
+            ### Otherwise, the topic modeling will zero out the other scores.
+            topic_neighborhood_scores = {}
+            print("--------------------------------------")
+            print(topic_neighborhoods)
+            if topic_neighborhoods is None:
+                
+                topic_neighborhood_scores = all_neighborhood_scores
+            else:
+                for neighborhood in all_neighborhood_scores.keys():
+                    if neighborhood in topic_neighborhoods:
+                        topic_neighborhood_scores[neighborhood] = all_neighborhood_scores[neighborhood]
+                    else:
+                        topic_neighborhood_scores[neighborhood] = [(0, 0)]
+        
         for neighborhood, scores in topic_neighborhood_scores.iteritems():  
             score_avg = np.mean([score[1] for score in scores])
             neighborhood_to_score[neighborhood] = score_avg
@@ -210,9 +227,6 @@ class CribHub:
     def combine_scores(self, airbnb_scores, nytimes_scores):
         a = 0.8
         b = 0.2
-        # print(airbnb_scores)
-        # print(nytimes_scores)
-        # neighborhoods
         airbnb = set(airbnb_scores.keys())
         nytimes = set(nytimes_scores.keys())
         all_neighorhoods = airbnb.union(nytimes)
@@ -221,7 +235,6 @@ class CribHub:
         nytimes_only = nytimes - both
 
         neighborhood_to_score = {}
-        #print("in combine_scores")
 
         # neighborhood in both airbnb & nytimes -- CLEAN THIS
         for nbhd in both:
@@ -229,7 +242,6 @@ class CribHub:
         # only airbnb neighborhoods
         for nbhd in airbnb_only:
             neighborhood_to_score[nbhd] = a*airbnb_scores[nbhd]
-        #print("stalled here")
         # only nytimes neighborhoods
         for nbhd in nytimes_only:
             neighborhood_to_score[nbhd] = b*nytimes_scores[nbhd]
@@ -238,7 +250,6 @@ class CribHub:
         # edit airbnb_scores --- neighborhood_to_listing_ids
 
         # edit nytimes_scores
-        print("returned")
 
         return neighborhood_to_score
     
@@ -358,8 +369,6 @@ class CribHub:
         ###### handling query again
         neighborhood_ranking = {}
         document_ranking = {}
-        print(type(airbnb_q_mod))
-        print(airbnb_q_mod)
         
         scores = self.score_airbnb_neighborhoods(airbnb_q_mod, True)
 
@@ -379,7 +388,6 @@ class CribHub:
 
         listing_ranking = []
         if listing_text:
-            print(len(listing_text))
             for lid, text in listing_text:
                 listing_score = self.get_listing_score(airbnb_query_vec, str(lid))
                 nbhd_rank = nbhd_ranks[self.listing_id_to_neighborhood[str(lid)]]
@@ -387,7 +395,6 @@ class CribHub:
 
         # get all review scores
         """review_ranking = []
-        print(len(nytimes_id_to_review))
         for rid, text in self.nytimes_id_to_review.iteritems():
             review_score = self.get_review_score(nytimes_query_vec, rid)
             nbhd_rank = nbhd_ranks[self.nytimes_id_to_neighborhood[rid]]
@@ -422,10 +429,8 @@ class CribHub:
         vec = np.zeros(10)
         for topic in indexes:
             vec += self.topic_matrix[:, topic]
-        #print(vec)
         #Checking if all values in vector are same if so we retun None
         topic = str(np.argmax(vec))
-        #print(type(self.topic_to_neighborhoods[topic]))
         return self.topic_to_neighborhoods[topic]
 
 
@@ -472,15 +477,10 @@ class CribHub:
 
 
     def get_best_review_for_text(self, query_svd, text):
-        print("alpha")
         reviews = text.split("-----")
-        print("beta")
         reviews_svd = [(review, self.get_query_svd(review, self.airbnb_word_to_index, self.airbnb_idf_values, self.airbnb_words_compressed)) for review in reviews]
-        print("delta")
         review_scores = [(review, query_svd.dot(review_svd) / (la.norm(review_svd)+1)) for review, review_svd in reviews_svd]
-        print("tell em all them bitches")
         top_review = sorted(review_scores, key=lambda x: x[1], reverse=True)[0]
-        print("return from here")
         return top_review
 
 
