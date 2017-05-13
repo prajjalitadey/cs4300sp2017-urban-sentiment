@@ -103,6 +103,34 @@ def listing_id_to_listing():
     return listing_id_to_listing
 
 
+# airbnb function
+def listing_id_to_listing_db():
+    print("Listing_ID_to_listing Function")
+    data_frame = pd.DataFrame.from_csv("/Users/prajjalitadey/Documents/Spring2017/4300/cs4300sp2017-urban-sentiment/jsons/nyc_combination.csv", index_col=None)
+    # data_frame = pd.DataFrame.from_csv("/Users/prajjalitadey/Documents/Spring2017/4300/cs4300sp2017-urban-sentiment/jsons/test.csv", index_col=None)
+
+    i = 0
+    listing_id_to_listing_temp = defaultdict(list)
+    for row in data_frame.itertuples():
+        review = getattr(row, 'comments')
+        if isinstance(review, basestring):
+            re.sub('\\.', '', review)
+            review = UnicodeDammit(review).unicode_markup.encode("utf-8")
+            neighborhood = (getattr(row, 'neighbourhood')).lower()
+            listing_id = getattr(row, 'listing_id')
+
+            listing_id_to_listing_temp[listing_id].append(review)
+
+        if(i % 1000 == 0):
+            print(str(i)+" completed.")
+        i += 1
+
+    # listing_id: a string that is the combination of all reviews for that listing
+    listing_id_to_listing = {lid: '--ENDREVIEW--'.join(str_list) for lid, str_list in listing_id_to_listing_temp.iteritems()}
+
+    return listing_id_to_listing
+
+
 # nyt function
 def nyt_id_to_review():
     print("NYT_ID_to_Review Function")
@@ -138,7 +166,7 @@ def create_tfidf_matrix(doc_dict):
     listings_enumerate = list(enumerate(listings))
 
     print("Creating Vectorizers and vocabulary (word to index)")
-    tfidf_vect = TfidfVectorizer(max_df=0.95, min_df=0.02, max_features=3000, stop_words='english', norm='l2', ngram_range=(1,2))
+    tfidf_vect = TfidfVectorizer(max_df=0.95, min_df=0.02, max_features=5000, stop_words='english', norm='l2', ngram_range=(1,1))
     tfidf_matrix = tfidf_vect.fit_transform(listings_text)
 
     tfidf_matrix_transpose=tfidf_matrix.transpose()
@@ -163,30 +191,22 @@ if __name__ == '__main__':
     with open('neighborhood_to_listing_ids.json', 'w') as fp:
         json.dump(neighborhood_to_listing_ids, fp)
 
-    # airbnb_listing_id_to_listing = listing_id_to_listing()
-    # with open('airbnb_listing_id_to_listing.json', 'w') as fp:
-    #     json.dump(airbnb_listing_id_to_listing, fp)
+    airbnb_listing_id_to_listing = listing_id_to_listing()
+    with open('airbnb_listing_id_to_listing.json', 'w') as fp:
+        json.dump(airbnb_listing_id_to_listing, fp)
 
-    # airbnb_tfidf, airbnb_idx_to_id, airbnb_id_to_idx = create_tfidf_matrix(airbnb_listing_id_to_listing)
-    #    with open('airbnb_tfidf.json', 'w') as fp:
-    #        json.dump(airbnb_tfidf, fp)
-    #    with open('airbnb_idx_to_id.json', 'w') as fp:
-    #        json.dump(airbnb_idx_to_id, fp)
-    #    with open('airbnb_id_to_idx.json', 'w') as fp:
-    #        json.dump(airbnb_id_to_idx, fp)
-
-    # tfidf_compressed, words_compressed, word_to_index, airbnb_id_to_idx, airbnb_idx_to_id, sigma,idf_values = create_tfidf_matrix(airbnb_listing_id_to_listing)
-    #with open('tfidf_matrix.json', 'w') as fp:
-        #json.dump(tfidf_matrix, fp)
-    # json.dump(tfidf_compressed, open('airbnb_tfidf_compressed.json', 'w'), cls=NumpyEncoder)
-    # json.dump(words_compressed, open('airbnb_words_compressed.json','w'), cls=NumpyEncoder)
-    # json.dump(word_to_index, open('airbnb_word_to_index.json','w'), cls=NumpyEncoder)
-    # json.dump(sigma, open('airbnb_sigma.json','w'), cls=NumpyEncoder)
-    # json.dump(idf_values, open('airbnb_idf_values.json','w'), cls=NumpyEncoder)
-    # with open('airbnb_idx_to_id.json', 'w') as fp:
-    #     json.dump(airbnb_idx_to_id, fp)
-    # with open('airbnb_id_to_idx.json', 'w') as fp:
-    #     json.dump(airbnb_id_to_idx, fp)
+    tfidf_compressed, words_compressed, word_to_index, airbnb_id_to_idx, airbnb_idx_to_id, sigma,idf_values = create_tfidf_matrix(airbnb_listing_id_to_listing)
+    with open('tfidf_matrix.json', 'w') as fp:
+        json.dump(tfidf_matrix, fp)
+    json.dump(tfidf_compressed, open('airbnb_tfidf_compressed.json', 'w'), cls=NumpyEncoder)
+    json.dump(words_compressed, open('airbnb_words_compressed.json','w'), cls=NumpyEncoder)
+    json.dump(word_to_index, open('airbnb_word_to_index.json','w'), cls=NumpyEncoder)
+    json.dump(sigma, open('airbnb_sigma.json','w'), cls=NumpyEncoder)
+    json.dump(idf_values, open('airbnb_idf_values.json','w'), cls=NumpyEncoder)
+    with open('airbnb_idx_to_id.json', 'w') as fp:
+        json.dump(airbnb_idx_to_id, fp)
+    with open('airbnb_id_to_idx.json', 'w') as fp:
+        json.dump(airbnb_id_to_idx, fp)
 
     # nyt_id_to_review, nbhd_to_review, nyt_id_to_neighborhood = nyt_id_to_review()
     # with open('nyt_id_to_review.json', 'w') as fp:
