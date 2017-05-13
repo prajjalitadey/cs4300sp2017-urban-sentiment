@@ -9,8 +9,10 @@ from scipy.sparse.linalg import svds
 from sklearn.preprocessing import normalize
 import numpy as np
 import base64
+import nltk
+
 class NumpyEncoder(json.JSONEncoder):
-    
+
     def default(self, obj):
         """If input object is an ndarray it will be converted into a dict
             holding dtype, shape and the data, base64 encoded.
@@ -83,6 +85,8 @@ def listing_id_to_listing():
     for row in data_frame.itertuples():
         review = getattr(row, 'comments')
         if isinstance(review, basestring):
+            review = " ".join(w for w in nltk.wordpunct_tokenize(review) if w.lower() in words or not w.isalpha())
+            re.sub('\\.', '', review)
             review = UnicodeDammit(review).unicode_markup.encode("utf-8")
             neighborhood = (getattr(row, 'neighbourhood')).lower()
             listing_id = getattr(row, 'listing_id')
@@ -94,7 +98,7 @@ def listing_id_to_listing():
         i += 1
 
     # listing_id: a string that is the combination of all reviews for that listing
-    listing_id_to_listing = {lid: ', '.join(str_list) for lid, str_list in listing_id_to_listing_temp.iteritems()}
+    listing_id_to_listing = {lid: '--ENDREVIEW--'.join(str_list) for lid, str_list in listing_id_to_listing_temp.iteritems()}
 
     return listing_id_to_listing
 
