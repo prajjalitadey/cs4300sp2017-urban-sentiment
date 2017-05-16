@@ -394,15 +394,13 @@ class CribHub:
             airbnb_query_svd = self.get_query_svd(criteria, self.airbnb_word_to_index, self.airbnb_idf_values, self.airbnb_words_compressed)
 
 
-            listing_text = self.get_text(sorted_listingids[:10])
+            listing_text = self.get_text(sorted_listingids[:5])
 
             airbnb_ranking = []
             if listing_text:
                 for lid, text in listing_text:
                     # split into reviews
                     listing_score = self.get_listing_score(airbnb_query_svd, str(lid))
-
-
                     nbhd_rank = nbhd_ranks[self.listing_id_to_neighborhood[str(lid)]]
                     airbnb_ranking.append(['airbnb', nbhd_rank, lid, listing_score, text])
 
