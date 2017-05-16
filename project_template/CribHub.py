@@ -3,6 +3,7 @@ from __future__ import print_function
 import base64
 import json
 import urllib2
+import math
 # from sklearn.feature_extraction.text import TfidfVectorizer
 import numpy as np
 from collections import defaultdict
@@ -133,6 +134,9 @@ class CribHub:
         self.cur = self.conn.cursor()
         # self.conn.autocommit(True)
 
+        #######GLOBAL##########
+        self.num_listings = 31121
+
 
     def get_listing_score(self, query_svd, listing_id):
         #listing_id = "13571116";
@@ -225,6 +229,8 @@ class CribHub:
     def combine_scores(self, airbnb_scores, nytimes_scores):
         a = 0.8
         b = 0.2
+        range1 = 0.01
+        range2 = 0.05
         airbnb = set(airbnb_scores.keys())
         nytimes = set(nytimes_scores.keys())
         all_neighorhoods = airbnb.union(nytimes)
@@ -236,10 +242,27 @@ class CribHub:
 
         # neighborhood in both airbnb & nytimes -- CLEAN THIS
         for nbhd in both:
-            neighborhood_to_score[nbhd] = a*airbnb_scores[nbhd] + b*nytimes_scores[nbhd]
+            count = len(set(self.neighborhood_to_listing_ids[nbhd]))
+            neighborhood_to_score[nbhd] = a*airbnb_scores[nbhd]*math.log(count,6) + b*nytimes_scores[nbhd]
+            # if(count < 10):
+            #     neighborhood_to_score[nbhd] = a*airbnb_scores[nbhd]*math.log10(count) + b*nytimes_scores[nbhd]
+            # elif(count >= 10 and count < 50):
+            #     neighborhood_to_score[nbhd] = a*airbnb_scores[nbhd]*range2 + b*nytimes_scores[nbhd]
+            # else:
+            #     neighborhood_to_score[nbhd] = a*airbnb_scores[nbhd] + b*nytimes_scores[nbhd]
+
         # only airbnb neighborhoods
         for nbhd in airbnb_only:
-            neighborhood_to_score[nbhd] = a*airbnb_scores[nbhd]
+            count = len(set(self.neighborhood_to_listing_ids[nbhd]))
+            neighborhood_to_score[nbhd] = a*airbnb_scores[nbhd]*math.log(count,6)
+            # if(count < 10):
+            #     neighborhood_to_score[nbhd] = a*airbnb_scores[nbhd]*range1
+            # elif(count >= 10 and count < 50):
+            #     neighborhood_to_score[nbhd] = a*airbnb_scores[nbhd]*range2
+            # else:
+            #     neighborhood_to_score[nbhd] = a*airbnb_scores[nbhd]
+
+            
         # only nytimes neighborhoods
         for nbhd in nytimes_only:
             neighborhood_to_score[nbhd] = b*nytimes_scores[nbhd]
@@ -249,6 +272,46 @@ class CribHub:
         # if all(v == 0 for v in neighborhood_to_score.values()):
         #     print ("NO RESULTS AVAILABLE -------")
         return neighborhood_to_score
+
+
+
+    # def combine_scores(self, airbnb_scores, nytimes_scores):
+    #     a = 0.95
+    #     b = 0.01
+
+    #     airbnb = set(airbnb_scores.keys())
+    #     nytimes = set(nytimes_scores.keys())
+    #     all_neighorhoods = airbnb.union(nytimes)
+    #     both = airbnb.intersection(nytimes)
+    #     airbnb_only = airbnb - both
+    #     nytimes_only = nytimes - both
+
+    #     neighborhood_to_score = {}
+
+    #     # neighborhood in both airbnb & nytimes -- CLEAN THIS
+    #     for nbhd in both:
+    #         count = len(set(self.neighborhood_to_listing_ids[nbhd]))
+    #         print("-------------------")
+    #         print(a*airbnb_scores[nbhd] + b*nytimes_scores[nbhd])
+    #         score = a*airbnb_scores[nbhd]*(float(count)/float(self.num_listings)) + b*nytimes_scores[nbhd]
+    #         print(score)
+    #         neighborhood_to_score[nbhd] = score
+
+    #     # only airbnb neighborhoods
+    #     for nbhd in airbnb_only:
+    #         count = len(set(self.neighborhood_to_listing_ids[nbhd]))
+    #         print("--------B-----------")
+    #         print(a*airbnb_scores[nbhd])
+    #         score = a*airbnb_scores[nbhd]*(float(count)/float(self.num_listings)) 
+    #         print(score)
+    #         neighborhood_to_score[nbhd] = score
+
+    #     # only nytimes neighborhoods
+    #     for nbhd in nytimes_only:
+    #         neighborhood_to_score[nbhd] = b*nytimes_scores[nbhd]
+    #         self.neighborhood_to_listing_ids[nbhd] = []
+
+    #     return neighborhood_to_score
 
 
     # def handle_query(self, query):
@@ -299,18 +362,6 @@ class CribHub:
     #     return {'neighborhood_ranking': neighborhood_ranking, 'listing_ranking': listing_ranking, 'review_ranking': review_ranking, 'query': query}
 
 
-
-
-
-
-
-
-
-
-
-
-
-
     # new function
     def handle_query(self, query):
         query_criteria = query.split(",")
@@ -338,16 +389,16 @@ class CribHub:
             while (len(airbnb_listing_ids) < 100):
                 # print (type(nbhd_scores[i]))
                 new_listing_ids = list(set([nbhd for nbhd in self.neighborhood_to_listing_ids[ nbhd_scores[i][0]]]))
-                print (len(new_listing_ids))
+                #print (len(new_listing_ids))
                 airbnb_listing_ids.extend( new_listing_ids)
                 i+=1
 
             # listing_ids = self.airbnb_id_to_idx.keys()
-            print ("-" * 10 + "START: GETTING TEXT")
+            #print ("-" * 10 + "START: GETTING TEXT")
             airbnb_query_svd = self.get_query_svd(criteria, self.airbnb_word_to_index, self.airbnb_idf_values, self.airbnb_words_compressed)
-            print (len(airbnb_listing_ids))
+            #print (len(airbnb_listing_ids))
             listing_text = self.get_text(airbnb_listing_ids)
-            print ("-" * 10 + "STOP: GETTING TEXT")
+            #print ("-" * 10 + "STOP: GETTING TEXT")
 
             airbnb_ranking = []
             if listing_text:
@@ -565,13 +616,13 @@ class CribHub:
     def get_best_review_for_text(self, query_svd, text):
         reviews = text.split("-----")
 
-        print ("------------------------------------------------------NEW TEXT------------------------------------------------------")
+        #print ("------------------------------------------------------NEW TEXT------------------------------------------------------")
 
 
-        for item in reviews:
-            print ("--------------------------------------")
-            print (item)
-            print ("---------------------------------------")
+        #for item in reviews:
+            # print ("--------------------------------------")
+            # print (item)
+            # print ("---------------------------------------")
         reviews_svd = [(review, self.get_query_svd(review, self.airbnb_word_to_index, self.airbnb_idf_values, self.airbnb_words_compressed)) for review in reviews]
         review_scores = [(review, query_svd.dot(review_svd) / (la.norm(review_svd)+1)) for review, review_svd in reviews_svd]
         top_review = sorted(review_scores, key=lambda x: x[1], reverse=True)[0]
