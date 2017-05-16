@@ -48,6 +48,7 @@ def handle_click(neighborhood):
 
 
 def requery(q):
+    print ("REQUERYING")
     data = ast.literal_eval(q)
     d = inst.rocchio(data["query"], data["relevant"], data["irrelevant"])
     jsonarray = json.dumps(d)
