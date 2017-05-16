@@ -241,11 +241,16 @@
                                     success: function(response) {
                                         console.log("success");
 
-                                        resultsDict   = JSON.parse(response),
+                                        resultsDict   = JSON.parse(response);
+                                        console.log(resultsDict)
+                                        console.log(Object.keys(resultsDict["neighborhood_ranking"])[0])
                                         defaultOutput = resultsDict["neighborhood_ranking"],
-                                        currentOutput = resultsDict["neighborhood_ranking"]["all_criteria"],
+                                        currentOutput = resultsDict["neighborhood_ranking"][Object.keys(resultsDict["neighborhood_ranking"])[0]],
                                         queryText     = resultsDict["query"],
-                                        topListings   = resultsDict["document_ranking"]["all_criteria"]
+                                        topListings   = resultsDict["document_ranking"][Object.keys(resultsDict["document_ranking"])[0]]
+
+                                        console.log("RESULTS DICT")
+                                        console.log(resultsDict)
 
                                         currentCriteria = queryText;
                                         $(".search-results").empty();
