@@ -38,6 +38,7 @@
                     $(".back-to-search").addClass("hidden");
                     $(".user-query").addClass("hidden");
                     $(".back-to-search").on("click",function(){
+                        console.log("here")
                         var target = $(".splash");
                         $('html,body').animate({
                             scrollTop: target.offset().top
@@ -59,130 +60,136 @@
                                 currentOutput = resultsDict["neighborhood_ranking"]["all_criteria"],
                                 queryText     = resultsDict["query"],
                                 topDocuments  = resultsDict["document_ranking"],
+                                emptyResponse = resultsDict["empty"]
                                 topListings   = []
 
-                            currentCriteria = queryText;
 
-                            if(resultsDict["document_ranking"]) {
-                                if(resultsDict["document_ranking"]["all_criteria"]) {
-                                    topListings = resultsDict["document_ranking"]["all_criteria"];
-                                }
-                            }
-
-                            if(queryText === ""){
-                                $(".output").addClass("hidden");
-                                $(".query-text").addClass("hidden");
-                                $(".user-query").addClass("hidden");
-                            } else {
-                                $(".output").removeClass("hidden");
-                                $(".query-text").removeClass("hidden");
-                                $(".user-query").removeClass("hidden");
-                                $(".back-to-search").removeClass("hidden");
+                            if(emptyResponse && queryText!="") {
+                                $(".requery").addClass("hidden");
+                                $(".requery-blurb").addClass("hidden");
                                 var target = $(".output-container");
-
+                                $(".output-container").css("height","100%")
                                 $('html,body').animate({
                                   scrollTop: target.offset().top
                                 }, 1000);
 
-                                d3.json("/static/map_data/neighbourhoods.json",function(data){
-                                    drawMap(data,currentOutput);
+                                $(".output-container").append("<div class='col-md-3'></div><div class='col-md-6 not-found'> Oops! Looks like your query does not match anything in our system. <a class='back-to-search' href='#'> Please try a different query. </a> </div><div class='col-md-3'></div>")
 
-                                    outputObjects = [];
-                                    for (let arr of defaultOutput) {
-                                        outputObjects.push({"neighborhood":arr[0],"score":arr[1]})
-                                    }
-                                    drawBarChart(outputObjects);
-                                })
-                            }
+                            } else {
+                                $(".requery").removeClass("hidden");
+                                $(".requery-blurb").removeClass("hidden");
 
-                            // CRITERIA BUTTON UI 
-                            var queryCriteria = queryText.split(",")
-                                queryCriteria.push("All")
-                            for (let criteria of queryCriteria) {
-                                var spliced = (criteria.trim()).replace(/ /g, "-");
-                                $(".user-query").append("<button class='criteria btn draw-border' id='" + spliced +"'>" + criteria + "</button>");
+                                currentCriteria = queryText;
 
-
-                            }
-
-                            queryText = queryText.trim();
-                            // TOP LISTINGS UI
-
-                            var queryWords = queryText.replace(/,/g , " ");
-                                queryWords = queryWords.split(" ")
-
-                            var k = 0;
-                            for (let listingArray of topListings) {
-                                listingText = listingArray[4];
-                                reviewBuffer = "";
-                                words = listingText.split(" ");
-                                for (let word of words) {
-                                    if(queryWords.contains(word)) {
-                                        reviewBuffer = reviewBuffer + " <span class='queryWord' style='padding:5px;background-color:#efe40e'>" + word + "</span> ";
-                                    } else {
-                                        reviewBuffer = reviewBuffer + " " + word;
+                                if(resultsDict["document_ranking"]) {
+                                    if(resultsDict["document_ranking"]["all_criteria"]) {
+                                        topListings = resultsDict["document_ranking"]["all_criteria"];
                                     }
                                 }
 
-                                $(".checkboxes").append("<div class='checkbox'><label><input type='checkbox' class='roccioCheck' name='listing" + k + "' value=''> <span id='doc" + k + "'></span> </label></div> <br> <hr>")
+                                if(queryText === ""){
+                                    $(".output").addClass("hidden");
+                                    $(".query-text").addClass("hidden");
+                                    $(".user-query").addClass("hidden");
+                                    var target = $(".output-container");
 
-
-                                console.log(reviewBuffer);
-
-                                $("#doc"+k).append(reviewBuffer);
-
-                                k++;
-
-                            }
-
-                            // reviewBuffer = "";
-                            // words = bestReview["entry"].split(" ");
-                            // for (let word of words) {
-                            //     if(queryWords.contains(word)) {
-                            //         reviewBuffer = reviewBuffer + " <span class='queryWord' style='background-color:#efe40e'>" + word + "</span> ";
-                            //     } else {
-                            //         reviewBuffer = reviewBuffer + " " + word;
-                            //     }
-                            // }
-
-                            // HIGHTLIGHT DEFAULT CRITERIA
-                            $(".draw-border#All").addClass("selected");
-
-                            $(".roccioCheck").on("click", function(e){
-                                relevantDocs.push(topListings[(e.target.name).slice(-1)][2]);
-                            });
-
-                            // HANDLE CRITERIA CLICK
-                            $(".draw-border").on("click", function(e){
-
-                                $(".draw-border").removeClass("selected");
-                                e.preventDefault();
-                                $(this).addClass("selected");
-                                $(".search-results").empty();
-                                $("#map").empty();
-
-                                var chosenCriteria = ($(this).text()).trim();
-
-                                currentCriteria = chosenCriteria
-
-                                var outputList = resultsDict[chosenCriteria]
-                                 currentOutput = outputList
-
-                                criteria = ($(this).text()).trim()
-                                if(criteria === "All") {
-                                    currentOutput = resultsDict["neighborhood_ranking"]["all_criteria"];
                                 } else {
-                                    currentOutput = resultsDict["neighborhood_ranking"][criteria];
+                                    $(".output").removeClass("hidden");
+                                    $(".query-text").removeClass("hidden");
+                                    $(".user-query").removeClass("hidden");
+                                    $(".back-to-search").removeClass("hidden");
+                                    var target = $(".output-container");
+
+                                    $('html,body').animate({
+                                      scrollTop: target.offset().top
+                                    }, 1000);
+
+                                    d3.json("/static/map_data/neighbourhoods.json",function(data){
+                                        drawMap(data,currentOutput);
+
+                                        outputObjects = [];
+                                        for (let arr of defaultOutput) {
+                                            outputObjects.push({"neighborhood":arr[0],"score":arr[1]})
+                                        }
+                                        drawBarChart(outputObjects);
+                                    })
                                 }
+
+                                // CRITERIA BUTTON UI 
+                                var queryCriteria = queryText.split(",")
+                                    queryCriteria.push("All")
+                                for (let criteria of queryCriteria) {
+                                    var spliced = (criteria.trim()).replace(/ /g, "-");
+                                    $(".user-query").append("<button class='criteria btn draw-border' id='" + spliced +"'>" + criteria + "</button>");
+
+
+                                }
+
+                                queryText = queryText.trim();
+                                // TOP LISTINGS UI
+
+                                var queryWords = queryText.replace(/,/g , " ");
+                                    queryWords = queryWords.split(" ")
+
+                                var k = 0;
+                                for (let listingArray of topListings) {
+                                    listingText = listingArray[4];
+                                    reviewBuffer = "";
+                                    words = listingText.split(" ");
+                                    for (let word of words) {
+                                        if(queryWords.contains(word)) {
+                                            reviewBuffer = reviewBuffer + " <span class='queryWord' style='padding:5px;background-color:#efe40e'>" + word + "</span> ";
+                                        } else {
+                                            reviewBuffer = reviewBuffer + " " + word;
+                                        }
+                                    }
+
+                                    $(".checkboxes").append("<div class='checkbox'><label><input type='checkbox' class='roccioCheck' name='listing" + k + "' value=''> <span id='doc" + k + "'></span> </label></div> <br> <hr>")
+
+                                    $("#doc"+k).append(reviewBuffer);
+
+                                    k++;
+
+                                }
+
+                                // HIGHTLIGHT DEFAULT CRITERIA
+                                $(".draw-border#All").addClass("selected");
+
+                                $(".roccioCheck").on("click", function(e){
+                                    relevantDocs.push(topListings[(e.target.name).slice(-1)][2]);
+                                });
+
+                                // HANDLE CRITERIA CLICK
+                                $(".draw-border").on("click", function(e){
+
+                                    $(".draw-border").removeClass("selected");
+                                    e.preventDefault();
+                                    $(this).addClass("selected");
+                                    $(".search-results").empty();
+                                    $("#map").empty();
+
+                                    var chosenCriteria = ($(this).text()).trim();
+
+                                    currentCriteria = chosenCriteria
+
+                                    var outputList = resultsDict[chosenCriteria]
+                                     currentOutput = outputList
+
+                                    criteria = ($(this).text()).trim()
+                                    if(criteria === "All") {
+                                        currentOutput = resultsDict["neighborhood_ranking"]["all_criteria"];
+                                    } else {
+                                        currentOutput = resultsDict["neighborhood_ranking"][criteria];
+                                    }
                                 
 
                             
-                                d3.json("/static/map_data/neighbourhoods.json",function(data){
-                                    drawMap(data,currentOutput);
-                                    redrawBars(currentOutput, false);
-                                });
+                                    d3.json("/static/map_data/neighbourhoods.json",function(data){
+                                        drawMap(data,currentOutput);
+                                        redrawBars(currentOutput, false);
+                                    });
 
-                            });
+                                });
 
                             $("#requery-btn").on("click", function() {
 
@@ -210,7 +217,7 @@
                                         }
 
                                     }
-                                    
+
                                 }
 
                                 feedback["relevant"] = relevantDocs;
@@ -253,7 +260,7 @@
                                         redrawBars(currentOutput, true);
 
                                         $(".requery-blurb").empty();
-                                        $(".requery-blurb").append("Thanks for your input! You'll see the new results represented in the visualizations above and the top ranked reviews below.");
+                                        $(".requery-blurb").append("Thanks for your input! <br> You'll see the new results represented in the visualizations above and the top ranked reviews below. <br><br>");
 
                                         queryText = queryText.trim();
                                         
@@ -282,19 +289,6 @@
                                             k++;
 
                                         }
-
-
-
-
-
-
-
-
-
-
-
-
-
 
                                     },
 
@@ -416,6 +410,8 @@
                                     .attr("dy", ".3em") 
                                     .attr("text-anchor", "start")
                                     .text(function (d) { return d.neighborhood; });
+
+                            }
 
                             }
 

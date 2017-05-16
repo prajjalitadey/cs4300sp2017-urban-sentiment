@@ -371,15 +371,21 @@ class CribHub:
 
 
     # rel & irr is in form ['airbnb', id#]
-    def rocchio(self, q, rel, irr, a=0, b=15, c=10, clip=False):
+    def rocchio(self, q, rel, irr, a=0.3, b=5, c=4, clip=False):
         airbnb_wt = 0.8
         nytimes_wt = 0.2
+
+        print (rel)
+        print (irr)
 
         # separate airbnb & nytimes relevant and irrelevant docs
         airbnb_rel = [str(lid) for lid in rel if str(lid) in self.airbnb_id_to_idx.keys()]
         airbnb_irr = [str(lid) for lid in irr if str(lid) in self.airbnb_id_to_idx.keys()]
         nytimes_rel = [str(rid) for rid in rel if str(rid) in self.nytimes_id_to_idx.keys()]
         nytimes_irr = [str(rid) for rid in irr if str(rid) in self.nytimes_id_to_idx.keys()]
+
+        print (airbnb_rel)
+        print (airbnb_irr)
 
         airbnb_query_vec = self.get_query_svd(q, self.airbnb_word_to_index, self.airbnb_idf_values, self.airbnb_words_compressed)
         airbnb_q_mod = a*airbnb_query_vec
