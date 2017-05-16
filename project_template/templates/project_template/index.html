@@ -100,7 +100,9 @@
                                 queryCriteria.push("All")
                             for (let criteria of queryCriteria) {
                                 var spliced = (criteria.trim()).replace(/ /g, "-");
-                                $(".user-query").append("<span class='criteria' id='" + spliced +"'>" + criteria + "</span>");    
+                                $(".user-query").append("<button class='criteria btn draw-border' id='" + spliced +"'>" + criteria + "</button>");
+
+
                             }
 
                             queryText = queryText.trim();
@@ -124,6 +126,9 @@
 
                                 $(".checkboxes").append("<div class='checkbox'><label><input type='checkbox' class='roccioCheck' name='listing" + k + "' value=''> <span id='doc" + k + "'></span> </label></div> <br> <hr>")
 
+
+                                console.log(reviewBuffer);
+
                                 $("#doc"+k).append(reviewBuffer);
 
                                 k++;
@@ -141,7 +146,7 @@
                             // }
 
                             // HIGHTLIGHT DEFAULT CRITERIA
-                            $("span.criteria#All").addClass("selected");
+                            $(".draw-border#All").addClass("selected");
 
                             $(".roccioCheck").on("click", function(e){
                                 relevantDocs.push(topListings[(e.target.name).slice(-1)][2]);
@@ -149,9 +154,9 @@
                             });
 
                             // HANDLE CRITERIA CLICK
-                            $(".criteria").on("click", function(e){
+                            $(".draw-border").on("click", function(e){
 
-                                $(".criteria").removeClass("selected");
+                                $(".draw-border").removeClass("selected");
                                 e.preventDefault();
                                 $(this).addClass("selected");
                                 $(".search-results").empty();
@@ -209,8 +214,6 @@
 
                                     }
 
-                                    console.log("REL: ",feedback.relevant)
-                                    console.log("IRL: ",feedback.irrelevant)
                                 }
 
                                 feedback["relevant"] = relevantDocs;
@@ -257,8 +260,6 @@
                                         $(".requery-blurb").empty();
                                         $(".requery-blurb").append("Thanks for your input! You'll see the new results represented in the visualizations above and the top ranked reviews below.");
 
-                                        console.log("TOP: ",topListings);
-
                                         queryText = queryText.trim();
                                         
                                         // TOP LISTINGS UI
@@ -279,7 +280,7 @@
                                                 }
                                             }
 
-                                            $(".checkboxes").append("<div class='checkbox'><label><input type='checkbox' name='listing" + k + "' value=''> <span id='doc" + k + "'></span> </label></div> <br> <hr>")
+                                            $(".checkboxes").append("<div class='checkbox'><label> <span id='doc" + k + "'></span> </label></div> <br> <hr>")
 
                                             $("#doc"+k).append(reviewBuffer);
 
@@ -349,15 +350,15 @@
                                 height = 300 - margin.top - margin.bottom;
 
                                 var y = d3.scaleBand()
-                                    .range([height, 0])
+                                    .range([height-margin.bottom, 0])
                                     .padding(0.1);
 
                                 var x = d3.scaleLinear()
                                     .range([0, width]);
                                       
                                 var svg = d3.select(".search-results").append("svg")
-                                    .attr("width", width + margin.left + margin.right)
-                                    .attr("height", height + margin.top + margin.bottom)
+                                    .attr("width", width)
+                                    .attr("height", height)
                                     .append("g")
                                     .attr("transform", 
                                       "translate(" + margin.left + "," + margin.top + ")");
@@ -477,6 +478,7 @@
                         .attr("x",55)
                         .attr("y",150)
                         .attr("font-size","11px")
+                        .attr("fill","#C0C0C0")
                         .text("Click area for more info.")
 
                     var minX = 0.0;
@@ -599,7 +601,7 @@
                 <div class="col-md-12 splash">
         
             <form class="form-inline global-search col-md-12" method='GET' data-url="{% url 'index' %}">
-                <h1> CribHub. </h1><br>
+                <h1>  <span class="titleLetter"> C </span> <span class="titleLetter"> R </span> <span class="titleLetter"> I </span> <span class="titleLetter"> B </span> <span class="titleLetter">H</span> <span class="titleLetter">U</span> <span class="titleLetter">B</span> . </h1><br>
                 <div class="blurb">
                     <p>Query by city and what you desire in a neighborhood. Separate criteria by commas. <br> 
                     Example: "young professionals, affordable, bars nearby"</p>
@@ -677,7 +679,8 @@
             <div class="col-md-6">
                 
                 <div id="map" style="margin-top:-5%; "></div>
-                <div class="placeInfo col-md-12" style="border:solid 1px #ddd; height:300px; margin-top:-16.5%; overflow-y:scroll; font-size:14px !important; ">
+
+                <div class="placeInfo col-md-12" style="border:solid 1px #ddd; height:300px; margin-top:9.5%; overflow-y:scroll; font-size:14px !important; ">
 
                 </div>
                 <!-- <div class="placeInfo col-md-2"></div> -->

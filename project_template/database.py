@@ -166,8 +166,6 @@ def insert_airbnb_values_to_review_table(airbnb_review_id_to_vec_dict):
     sql = "INSERT INTO airbnb_review_to_vec VALUES (%s, %s)"
     args = [(key, val) for key, val in airbnb_review_id_to_vec_dict.iteritems()]
 
-    dataText = ','.join(cur.mongrify('(%s, %s)', row) for row in args)
-
     conn = None
     try:
         # read database configuration
@@ -176,8 +174,9 @@ def insert_airbnb_values_to_review_table(airbnb_review_id_to_vec_dict):
         conn = psycopg2.connect(**params)
         # create a new cursor
         cur = conn.cursor()
-        
         print("here")
+        dataText = ','.join(cur.mongrify('(%s, %s)', row) for row in args)
+        print("AYY")
         # execute the INSERT statement
         cur.execute("INSERT INTO airbnb_review_id_to_vec VALUES " + dataText)
         # commit the changes to the database
@@ -291,6 +290,9 @@ if __name__ == '__main__':
     #get_text(2515)
     #create_reviews_table()
     #create_reviews_table_nytimes()
+
     cribhub = CribHub()
-    print("here")
-    get_nytimes_review([1001, 1002])
+    insert_airbnb_values_to_review_table(cribhub.generateAirbnbReviewVectors())
+
+    # print("here")
+    # get_nytimes_review([1001, 1002])
