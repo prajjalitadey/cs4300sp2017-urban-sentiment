@@ -133,6 +133,9 @@ class CribHub:
         self.cur = self.conn.cursor()
         # self.conn.autocommit(True)
 
+        #######GLOBAL##########
+        self.num_listings = 31121
+
 
     def get_listing_score(self, query_svd, listing_id):
         #listing_id = "13571116";
@@ -188,10 +191,7 @@ class CribHub:
             ### If this is the case, then it will just return the original scores
             ### Otherwise, the topic modeling will zero out the other scores.
             topic_neighborhood_scores = {}
-            print("--------------------------------------")
-            print(topic_neighborhoods)
             if topic_neighborhoods is None:
-                
                 topic_neighborhood_scores = all_neighborhood_scores
             else:
                 for neighborhood in all_neighborhood_scores.keys():
@@ -199,6 +199,8 @@ class CribHub:
                         topic_neighborhood_scores[neighborhood] = all_neighborhood_scores[neighborhood]
                     else:
                         topic_neighborhood_scores[neighborhood] = [(0, 0)]
+
+        #print(topic_neighborhood_scores) #[(0, 0)]
         
         for neighborhood, scores in topic_neighborhood_scores.iteritems():  
             score_avg = np.mean([score[1] for score in scores])
@@ -225,8 +227,9 @@ class CribHub:
 
 
     def combine_scores(self, airbnb_scores, nytimes_scores):
-        a = 0.8
-        b = 0.2
+        a = 0.95
+        b = 0.01
+
         airbnb = set(airbnb_scores.keys())
         nytimes = set(nytimes_scores.keys())
         all_neighorhoods = airbnb.union(nytimes)
@@ -238,18 +241,26 @@ class CribHub:
 
         # neighborhood in both airbnb & nytimes -- CLEAN THIS
         for nbhd in both:
-            neighborhood_to_score[nbhd] = a*airbnb_scores[nbhd] + b*nytimes_scores[nbhd]
+            count = len(set(self.neighborhood_to_listing_ids[nbhd]))
+            print("-------------------")
+            print(a*airbnb_scores[nbhd] + b*nytimes_scores[nbhd])
+            score = a*airbnb_scores[nbhd]*(float(count)/float(self.num_listings)) + b*nytimes_scores[nbhd]
+            print(score)
+            neighborhood_to_score[nbhd] = score
+
         # only airbnb neighborhoods
         for nbhd in airbnb_only:
-            neighborhood_to_score[nbhd] = a*airbnb_scores[nbhd]
+            count = len(set(self.neighborhood_to_listing_ids[nbhd]))
+            print("--------B-----------")
+            print(a*airbnb_scores[nbhd])
+            score = a*airbnb_scores[nbhd]*(float(count)/float(self.num_listings)) 
+            print(score)
+            neighborhood_to_score[nbhd] = score
+
         # only nytimes neighborhoods
         for nbhd in nytimes_only:
             neighborhood_to_score[nbhd] = b*nytimes_scores[nbhd]
             self.neighborhood_to_listing_ids[nbhd] = []
-
-        # edit airbnb_scores --- neighborhood_to_listing_ids
-
-        # edit nytimes_scores
 
         return neighborhood_to_score
     
@@ -471,6 +482,7 @@ class CribHub:
         reviews_svd = [(listing, self.get_query_svd(review, self.airbnb_word_to_index, self.airbnb_idf_values, self.airbnb_words_compressed), review)
                        for listing, reviews in all_reviews for review in reviews]
         review_scores = [(listingid, query_svd.dot(review_svd) / la.norm(review_svd), review) for listingid, review_svd, review in reviews_svd]
+        
         top_reviews = sorted(review_scores, key = lambda x: x[1], reverse = True)[:10]
 
         return top_reviews #, sorted_sentiment_reviews[10:], sorted_sentiment_reviews[:10]
