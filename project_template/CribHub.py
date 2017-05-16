@@ -169,7 +169,6 @@ class CribHub:
 
         return review_dict
 
-<<<<<<< HEAD
     def generateNYTReviewVectors(self):
         review_dict = {}
 
@@ -179,17 +178,6 @@ class CribHub:
 
         return review_dict
             
-=======
-
-    def generateNYTReviewVectors(self):
-        review_dict = {}
-        for review_id in self.nytimes_id_to_review.keys():
-            review_text = self.nytimes_id_to_review[review_id]
-            review_dict[str(review_id)+"N"] = np.array_str(self.get_query_svd(review_text, self.nytimes_word_to_index, self.nytimes_idf_values, self.nytimes_words_compressed))
-        return review_dict
-
-
->>>>>>> 50484072f67ac15557becbd382bcea8f456f4160
     def get_listing_score(self, query_svd, listing_id):
         idx = self.airbnb_id_to_idx[listing_id]
         tfidf_svd = np.array(self.airbnb_tfidf_svd[idx])
@@ -539,7 +527,6 @@ class CribHub:
         #Checking if all values in vector are same if so we retun None
         topic = str(np.argmax(vec))
         return self.topic_to_neighborhoods[topic]
-
 
 
     # Returns sentiment from Lillian Lee's text-processing API: http://text-processing.com/docs/sentiment.html
