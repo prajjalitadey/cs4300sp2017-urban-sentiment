@@ -30,7 +30,7 @@
                 currentCriteria = "All";
 
                 $(document).ready(function(){
-                    var showOutput = false;
+                    var showOutput = false, relevantDocs = [], irrelevantDocs = [];
                     $(".output").addClass("hidden");
                     $(".query-text").addClass("hidden");
                     $("#selectedPlace").addClass("hidden");
@@ -103,16 +103,13 @@
                                 $(".user-query").append("<span class='criteria' id='" + spliced +"'>" + criteria + "</span>");    
                             }
 
-                            console.log("HIDFJLKSFJSLDKJ")
-                            console.log(topListings)
-
                             queryText = queryText.trim();
                             // TOP LISTINGS UI
 
                             var queryWords = queryText.replace(/,/g , " ");
                                 queryWords = queryWords.split(" ")
 
-                            var k = 1;
+                            var k = 0;
                             for (let listingArray of topListings) {
                                 listingText = listingArray[4];
                                 reviewBuffer = "";
@@ -125,7 +122,7 @@
                                     }
                                 }
 
-                                $(".checkboxes").append("<div class='checkbox'><label><input type='checkbox' name='listing" + k + "' value=''> <span id='doc" + k + "'></span> </label></div> <br> <hr>")
+                                $(".checkboxes").append("<div class='checkbox'><label><input type='checkbox' class='roccioCheck' name='listing" + k + "' value=''> <span id='doc" + k + "'></span> </label></div> <br> <hr>")
 
                                 $("#doc"+k).append(reviewBuffer);
 
@@ -143,10 +140,13 @@
                             //     }
                             // }
 
-                            
-
                             // HIGHTLIGHT DEFAULT CRITERIA
                             $("span.criteria#All").addClass("selected");
+
+                            $(".roccioCheck").on("click", function(e){
+                                relevantDocs.push(topListings[(e.target.name).slice(-1)][2]);
+                                console.log(relevantDocs)
+                            });
 
                             // HANDLE CRITERIA CLICK
                             $(".criteria").on("click", function(e){
@@ -193,21 +193,27 @@
 
                                 if(topListings.length > 0) {
 
-
                                 for (var i = 0 ; i < 10 ; i++) {
-                                    var listingNumber = i+1,
+                                    var listingNumber = i,
                                         listingText = topListings[i],
                                         radioVal = $('input[name=listing' + listingNumber + ']:checked').val()
 
+                                        console.log("RADIOVAL",radioVal)
+
                                     if(listingText) {
                                         if(radioVal) {
-                                            feedback["relevant"].push(listingText[0]);
+                                            feedback["relevant"].push(listingText[2]);
                                         } else {
-                                            feedback["irrelevant"].push(listingText[0]);
+                                            feedback["irrelevant"].push(listingText[2]);
                                         }
 
                                     }
+
+                                    console.log("REL: ",feedback.relevant)
+                                    console.log("IRL: ",feedback.irrelevant)
                                 }
+
+                                feedback["relevant"] = relevantDocs;
 
                                 feedback = JSON.stringify(feedback)
 
@@ -248,7 +254,7 @@
                                         var queryWords = queryText.replace(/,/g , " ");
                                             queryWords = queryWords.split(" ")
 
-                                        var k = 1;
+                                        var k = 0;
                                         for (let listingArray of topListings) {
                                             listingText = listingArray[4];
                                             reviewBuffer = "";
