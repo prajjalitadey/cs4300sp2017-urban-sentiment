@@ -215,6 +215,18 @@
 
                                 feedback["relevant"] = relevantDocs;
 
+                                irrelevantDocs = feedback["irrelevant"];
+
+                                var tmp = []
+                                for (let doc of irrelevantDocs) {
+                                    if(!contains(relevantDocs, doc)) {
+                                        tmp.push(doc)
+                                    }
+                                }
+                                irrelevantDocs = tmp
+
+                                feedback["irrelevant"] = irrelevantDocs;
+
                                 feedback = JSON.stringify(feedback)
 
                                 $.ajax({
