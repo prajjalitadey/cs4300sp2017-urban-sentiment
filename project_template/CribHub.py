@@ -507,11 +507,7 @@ class CribHub:
             self.conn.rollback()
 
     def get_neighborhood_information(self, query, neighborhood):
-            print(query)
             query_svd = self.get_query_svd(query, self.airbnb_word_to_index, self.airbnb_idf_values, self.airbnb_words_compressed)
-            print("-" * 30)
-            print(query_svd)
-            print("-" * 30)
             listing_ids = self.neighborhood_to_listing_ids[neighborhood]
             listings_to_score = [(listing, self.get_listing_score(query_svd, str(listing))) for listing in listing_ids]
             best_five, _ = zip(*sorted(listings_to_score, key = lambda x: x[1], reverse = True)[:5])
@@ -537,7 +533,7 @@ class CribHub:
             if top_reviews == None:
                 top_reviews = top_airbnb_reviews
 
-            return top_reviews #, sorted_sentiment_reviews[10:], sorted_sentiment_reviews[:10]
+            return top_reviews  #, sorted_sentiment_reviews[10:], sorted_sentiment_reviews[:10]
 
 
     def get_best_review_for_text(self, query_svd, text):
@@ -551,7 +547,6 @@ class CribHub:
     def get_nyt_review_scores(self, nyt_reviews):
         conn = None
         placeholders = ", ".join(str(rid) for rid in nyt_reviews)
-        print(placeholders)
         query = "SELECT * FROM nytimes_review_to_vec WHERE review_id IN (%s)" % placeholders
         try:
             params = config()
@@ -559,8 +554,6 @@ class CribHub:
             cur = conn.cursor()
             cur.execute(query)
             rows = cur.fetchall()
-            print("-" * 10)
-            print(rows)
             return rows
         except (Exception, psycopg2.DatabaseError) as error:
             self.conn.rollback()
