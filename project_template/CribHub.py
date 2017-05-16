@@ -365,7 +365,8 @@ class CribHub:
     # new function
     def handle_query(self, query):
         query_criteria = query.split(",")
-        query_criteria.append(query)
+        if len(query_criteria) > 1:
+            query_criteria.append(query)
         query_criteria = [q.strip() for q in query_criteria]
         # query_label = self.get_sentiment(query)['label']
 
@@ -413,10 +414,15 @@ class CribHub:
             # replace full listing text for best review, for airbnb docs
             documents = [[doc[0], doc[1], doc[2], doc[3], re.sub('\\.', '', self.get_best_review_for_text(airbnb_query_svd, doc[4])[0])] if doc[0] is 'airbnb' else [doc[0], doc[1], doc[2], doc[3], re.sub('\\.', '', doc[4])] for doc in documents]
 
-            if criteria is query:
+            if len(query_criteria) == 1:
+                neighborhood_ranking["all_criteria"] = nbhd_scores
+                document_ranking["all_criteria"] = documents
+
+            elif criteria is query:
                 criteria = 'all_criteria'
             neighborhood_ranking[criteria] = nbhd_scores
             document_ranking[criteria] = documents
+
 
         return {'neighborhood_ranking': neighborhood_ranking, 'document_ranking': document_ranking, 'query': query}
 
