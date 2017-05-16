@@ -337,7 +337,6 @@ class CribHub:
             if listing_text:
                 for lid, text in listing_text:
                     # split into reviews
-
                     listing_score = self.get_listing_score(airbnb_query_svd, str(lid))
                     nbhd_rank = nbhd_ranks[self.listing_id_to_neighborhood[str(lid)]]
                     listofreviews = self.get_best_review_for_text(airbnb_query_svd, text)
@@ -351,7 +350,7 @@ class CribHub:
             for rid, text in self.nytimes_id_to_review.iteritems():
                 review_score = self.get_nyt_review_score(query_svd, rid)
                 nbhd_rank = nbhd_ranks[self.nytimes_id_to_neighborhood[rid]]
-                review_ranking.append(['nytimes', nbhd_rank, rid, 0.3*review_score, text])
+                review_ranking.append(['nytimes', nbhd_rank, rid, 0.6*review_score, text])
             documents = sorted(airbnb_ranking + review_ranking, key=lambda x: x[3], reverse=True)[:5]
 
             # replace full listing text for best review, for airbnb docs
@@ -393,7 +392,6 @@ class CribHub:
         if len(airbnb_irr_vecs) > 0:
             airbnb_irr_avg = np.array(airbnb_irr_vecs).mean(0)
             airbnb_q_mod -= c*airbnb_irr_avg
-
 
         nytimes_query_vec = self.get_query_svd(q, self.nytimes_word_to_index, self.nytimes_idf_values, self.nytimes_words_compressed)
         nytimes_q_mod = a*nytimes_query_vec
@@ -437,25 +435,27 @@ class CribHub:
         sorted_listingids = [x[0] for x in listing_scores]
 
         # listing_ids = self.airbnb_id_to_idx.keys()
-        listing_text = self.get_text(sorted_listingids[:5])
+        listing_text = self.get_text(sorted_listingids[:3])
 
         airbnb_ranking = []
         if listing_text:
             for lid, text in listing_text:
                 listing_score = self.get_listing_score(airbnb_q_mod, str(lid))
                 nbhd_rank = nbhd_ranks[self.listing_id_to_neighborhood[str(lid)]]
-                airbnb_ranking.append(['airbnb', nbhd_rank, lid, listing_score, text])
+                listofreviews = self.get_best_review_for_text(airbnb_query_svd, text)
+                for review, score in listofreviews:
+                    airbnb_ranking.append(['airbnb', nbhd_rank, lid, score, review])
 
         # get all review scores
         review_ranking = []
         for rid, text in self.nytimes_id_to_review.iteritems():
             review_score = self.get_nyt_review_score(nytimes_q_mod, rid)
             nbhd_rank = nbhd_ranks[self.nytimes_id_to_neighborhood[rid]]
-            review_ranking.append(['nytimes', nbhd_rank, rid, 0.3*review_score, text])
+            review_ranking.append(['nytimes', nbhd_rank, rid, 0.6*review_score, text])
 
         #documents = sorted(listing_ranking + review_ranking, key=lambda x: x[1])
         documents = sorted(airbnb_ranking + review_ranking, key=lambda x: x[3], reverse=True)[:5]
-        documents = [[doc[0], doc[1], doc[2], doc[3], re.sub('\\.', '', self.get_best_review_for_text(airbnb_query_svd, doc[4])[0])] if doc[0] is 'airbnb' else [doc[0], doc[1], doc[2], doc[3], re.sub('\\.', '', doc[4])] for doc in documents]
+        # documents = [[doc[0], doc[1], doc[2], doc[3], re.sub('\\.', '', self.get_best_review_for_text(airbnb_query_svd, doc[4])[0])] if doc[0] is 'airbnb' else [doc[0], doc[1], doc[2], doc[3], re.sub('\\.', '', doc[4])] for doc in documents]
 
         # if criteria is query:
         #     criteria = 'all_criteria'
