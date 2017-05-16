@@ -316,7 +316,6 @@ class CribHub:
         document_ranking = {}
 
         for criteria in query_criteria:
-
             # get neighborhood score
             a,listing_id_scores = self.score_airbnb_neighborhoods(criteria)
             b = self.score_nytimes_neighborhoods(criteria)
@@ -333,15 +332,17 @@ class CribHub:
             sorted_listingids = [x[0] for x in listing_scores]
 
             airbnb_query_svd = self.get_query_svd(criteria, self.airbnb_word_to_index, self.airbnb_idf_values, self.airbnb_words_compressed)
-            listing_text = self.get_text(sorted_listingids[:5])
+            listing_text = self.get_text(sorted_listingids[:3])
             airbnb_ranking = []
-
             if listing_text:
                 for lid, text in listing_text:
                     # split into reviews
+
                     listing_score = self.get_listing_score(airbnb_query_svd, str(lid))
                     nbhd_rank = nbhd_ranks[self.listing_id_to_neighborhood[str(lid)]]
-                    airbnb_ranking.append(['airbnb', nbhd_rank, lid, listing_score, text])
+                    listofreviews = self.get_best_review_for_text(airbnb_query_svd, text)
+                    for review, score in listofreviews:
+                        airbnb_ranking.append(['airbnb', nbhd_rank, lid, score, review])
 
             # get all review scores
             query_svd = self.get_query_svd(criteria, self.nytimes_word_to_index, self.nytimes_idf_values, self.nytimes_words_compressed)
@@ -354,8 +355,7 @@ class CribHub:
             documents = sorted(airbnb_ranking + review_ranking, key=lambda x: x[3], reverse=True)[:5]
 
             # replace full listing text for best review, for airbnb docs
-            documents = [[doc[0], doc[1], doc[2], doc[3], re.sub('\\.', '', self.get_best_review_for_text(airbnb_query_svd, doc[4])[0])] if doc[0] is 'airbnb' else [doc[0], doc[1], doc[2], doc[3], re.sub('\\.', '', doc[4])] for doc in documents]
-
+            # documents = [[doc[0], doc[1], doc[2], doc[3], re.sub('\\.', '', self.get_best_review_for_text(airbnb_query_svd, doc[4])[0])] if doc[0] is 'airbnb' else [doc[0], doc[1], doc[2], doc[3], re.sub('\\.', '', doc[4])] for doc in documents]
             if len(query_criteria) == 1:
                 neighborhood_ranking["all_criteria"] = nbhd_scores
                 document_ranking["all_criteria"] = documents
@@ -546,9 +546,8 @@ class CribHub:
         ####################### REPLACE FOLLOWING LINE, CALL DATABASE INSTEAD #######################
         reviews_svd = [(review, self.get_query_svd(review, self.airbnb_word_to_index, self.airbnb_idf_values, self.airbnb_words_compressed)) for review in reviews]
         review_scores = [(review, query_svd.dot(review_svd)) for review, review_svd in reviews_svd]
-        top_review = sorted(review_scores, key=lambda x: x[1], reverse=True)[0]
+        top_review = sorted(review_scores, key=lambda x: x[1], reverse=True)[:4]
         return top_review
-
 
     def get_nyt_review_scores(self, nyt_reviews):
         conn = None
@@ -566,12 +565,3 @@ class CribHub:
             return rows
         except (Exception, psycopg2.DatabaseError) as error:
             self.conn.rollback()
-
-if __name__ == "__main__":
-
-    cribhub = CribHub()
-    while True:
-        query = raw_input('query: ')
-        neighborhood = raw_input('neighborhood: ')
-        x = cribhub.get_neighborhood_information(query, neighborhood)
-        print(x)
