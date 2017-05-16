@@ -145,7 +145,9 @@ class CribHub:
         return tfidf_svd.dot(query_svd)
 
 
-    def get_review_score(self, query_svd, review_id):
+    def get_nyt_review_score(self, query_svd, review_id):
+        print("QUERY SVD: ")
+        print(query_svd)
         idx = self.nytimes_id_to_idx[review_id]
         tfidf_svd = np.array(self.nytimes_tfidf_svd[idx])
         return tfidf_svd.dot(query_svd)
@@ -214,7 +216,7 @@ class CribHub:
 
         for review_id in self.nytimes_id_to_idx.keys():
             neighborhood = self.nytimes_id_to_neighborhood[review_id]
-            score_info = self.get_review_score(query_svd, review_id)
+            score_info = self.get_nyt_review_score(query_svd, review_id)
             all_neighborhood_scores[neighborhood].append((review_id, score_info))
 
         neighborhood_to_score = {}
@@ -234,7 +236,7 @@ class CribHub:
         airbnb = set(airbnb_scores.keys())
         nytimes = set(nytimes_scores.keys())
         all_neighorhoods = airbnb.union(nytimes)
-        both = airbnb.intersection(nytimes)
+        both  = airbnb.intersection(nytimes)
         airbnb_only = airbnb - both
         nytimes_only = nytimes - both
 
@@ -352,7 +354,7 @@ class CribHub:
     #         # get all review scores
     #         query_svd = self.get_query_svd(query, self.nytimes_word_to_index, self.nytimes_idf_values, self.nytimes_words_compressed)
     #         for rid, text in self.nytimes_id_to_review.iteritems():
-    #             review_score = self.get_review_score(query_svd, rid)
+    #             review_score = self.get_nyt_review_score(query_svd, rid)
     #             if criteria == query:
     #                 criteria = 'all_criteria'
     #             review_ranking[criteria].append([rid, review_score, text])
@@ -418,7 +420,7 @@ class CribHub:
             query_svd = self.get_query_svd(criteria, self.nytimes_word_to_index, self.nytimes_idf_values, self.nytimes_words_compressed)
             review_ranking = []
             for rid, text in self.nytimes_id_to_review.iteritems():
-                review_score = self.get_review_score(query_svd, rid)
+                review_score = self.get_nyt_review_score(query_svd, rid)
                 nbhd_rank = nbhd_ranks[self.nytimes_id_to_neighborhood[rid]]
                 review_ranking.append(['nytimes', nbhd_rank, rid, review_score, text])
 
@@ -533,7 +535,7 @@ class CribHub:
         # get all review scores
         """review_ranking = []
         for rid, text in self.nytimes_id_to_review.iteritems():
-            review_score = self.get_review_score(nytimes_query_vec, rid)
+            review_score = self.get_nyt_review_score(nytimes_query_vec, rid)
             nbhd_rank = nbhd_ranks[self.nytimes_id_to_neighborhood[rid]]
             review_ranking.append(['nytimes', nbhd_rank, rid, review_score, text])
         """
