@@ -240,7 +240,11 @@ def create_reviews_table_nytimes():
 
 def insert_nyt_values_to_review_table(nyt_review_id_to_vec_dict):
     """ insert multiple vendors into the vendors table  """
+<<<<<<< HEAD
     sql = "INSERT INTO nytimes_review_to_vec VALUES (%s, %s)"
+=======
+    sql = "INSERT INTO nytimes_review_id_to_vec VALUES (%s, %s)"
+>>>>>>> 50484072f67ac15557becbd382bcea8f456f4160
     args = [(key, val) for key, val in nyt_review_id_to_vec_dict.iteritems()]
     conn = None
     try:
@@ -294,7 +298,5 @@ if __name__ == '__main__':
     #create_reviews_table()
     #create_reviews_table_nytimes()
     #cribhub = CribHub()
-    print("here")
-    #create_reviews_table_nytimes()
-    #insert_nyt_values_to_review_table(cribhub.generateNYTReviewVectors())
-    get_nytimes_review([1001, 1002])
+    #print("here")
+    #get_nytimes_review([1001, 1002])

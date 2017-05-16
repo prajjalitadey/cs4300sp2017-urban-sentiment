@@ -23,27 +23,22 @@ def index(request):
 
     if (request_type == "application/json" and request.method == "GET"):
 
-      print("GET")
-
       try:
         d = extra
-        if '"relevant":[]' in d:
+        if '"relevant":[' in d:
           output = requery(d)
-          return JsonResponse(requery, content_type="application/json", safe=False)
+          return JsonResponse(output, content_type="application/json", safe=False)
         elif '//name//' in d:
           clicked = handle_click(d)
           return JsonResponse(clicked, content_type="application/json", safe=False)
       except:
         print("ajax error")
 
-      print("OUT")
-
       output = original_query(search)
       return JsonResponse(output, content_type="application/json", safe=False)
-        
+
     elif (request_type == "text/html"):
-        return render_to_response('project_template/index.html', 
+        return render_to_response('project_template/index.html',
                               {
                                'search_params': search
                               })
-

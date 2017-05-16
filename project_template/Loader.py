@@ -78,10 +78,11 @@ def neighborhood_to_listing_ids():
 # airbnb function
 def listing_id_to_listing():
     print("Listing_ID_to_listing Function")
-    data_frame = pd.DataFrame.from_csv("/Users/prajjalitadey/Documents/Spring2017/4300/cs4300sp2017-urban-sentiment/jsons/nyc_combination.csv", index_col=None)
+    data_frame = pd.DataFrame.from_csv("/Users/prajjalitadey/Downloads/nyc_combination.csv", index_col=None)
     # data_frame = pd.DataFrame.from_csv("/Users/prajjalitadey/Documents/Spring2017/4300/cs4300sp2017-urban-sentiment/jsons/test.csv", index_col=None)
 
     i = 0
+    words = set(nltk.corpus.words.words())
     listing_id_to_listing_temp = defaultdict(list)
     for row in data_frame.itertuples():
         review = getattr(row, 'comments')
@@ -188,17 +189,15 @@ def create_tfidf_matrix(doc_dict):
 
 if __name__ == '__main__':
 
-    neighborhood_to_listing_ids = neighborhood_to_listing_ids()
-    with open('neighborhood_to_listing_ids.json', 'w') as fp:
-        json.dump(neighborhood_to_listing_ids, fp)
+    # neighborhood_to_listing_ids = neighborhood_to_listing_ids()
+    # with open('neighborhood_to_listing_ids.json', 'w') as fp:
+    #     json.dump(neighborhood_to_listing_ids, fp)
 
     airbnb_listing_id_to_listing = listing_id_to_listing()
     with open('airbnb_listing_id_to_listing.json', 'w') as fp:
         json.dump(airbnb_listing_id_to_listing, fp)
 
     tfidf_compressed, words_compressed, word_to_index, airbnb_id_to_idx, airbnb_idx_to_id, sigma,idf_values = create_tfidf_matrix(airbnb_listing_id_to_listing)
-    with open('tfidf_matrix.json', 'w') as fp:
-        json.dump(tfidf_matrix, fp)
     json.dump(tfidf_compressed, open('airbnb_tfidf_compressed.json', 'w'), cls=NumpyEncoder)
     json.dump(words_compressed, open('airbnb_words_compressed.json','w'), cls=NumpyEncoder)
     json.dump(word_to_index, open('airbnb_word_to_index.json','w'), cls=NumpyEncoder)
