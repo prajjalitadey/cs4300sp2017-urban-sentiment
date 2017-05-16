@@ -334,11 +334,12 @@ class CribHub:
             if listing_text:
                 for lid, text in listing_text:
                     # split into reviews
+
                     listing_score = self.get_listing_score(airbnb_query_svd, str(lid))
                     nbhd_rank = nbhd_ranks[self.listing_id_to_neighborhood[str(lid)]]
                     listofreviews = self.get_best_review_for_text(airbnb_query_svd, text)
                     for review, score in listofreviews:
-                        airbnb_ranking.append(['airbnb', nbhd_rank, lid, listing_score, review])
+                        airbnb_ranking.append(['airbnb', nbhd_rank, lid, score, review])
 
             # get all review scores
             query_svd = self.get_query_svd(criteria, self.nytimes_word_to_index, self.nytimes_idf_values, self.nytimes_words_compressed)
@@ -545,15 +546,9 @@ class CribHub:
 
 
     def get_best_review_for_text(self, query_svd, text):
-        print ("1")
         reviews = text.split("-----")
         ####################### REPLACE FOLLOWING LINE, CALL DATABASE INSTEAD #######################
-        print ("2")
         reviews_svd = [(review, self.get_query_svd(review, self.airbnb_word_to_index, self.airbnb_idf_values, self.airbnb_words_compressed)) for review in reviews]
-        print ("3")
         review_scores = [(review, query_svd.dot(review_svd)) for review, review_svd in reviews_svd]
-        print ("4")
         top_review = sorted(review_scores, key=lambda x: x[1], reverse=True)[:4]
-        print ("5")
-        print(top_review)
         return top_review
