@@ -26,6 +26,10 @@
 	margin-bottom:0;
 }
 
+a {
+	cursor: pointer;
+}
+
 /* STYLE OUTPUT */
 
 .output-container {
@@ -183,6 +187,13 @@ h3 {
 img {
 	max-width: 1000px;
 	max-height: 1000px;
+}
+
+.not-found {
+	margin-top:-15%;
+	font-family: Raleway;
+	font-weight: 400;
+	font-size:30px;
 }
 
 .topcorner{
