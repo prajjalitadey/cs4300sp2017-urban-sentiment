@@ -508,6 +508,7 @@ class CribHub:
             self.conn.rollback()
 
     def get_neighborhood_information(self, query, neighborhood):
+            print(query)
             query_svd = self.get_query_svd(query, self.airbnb_word_to_index, self.airbnb_idf_values, self.airbnb_words_compressed)
             print("-" * 30)
             print(query_svd)
@@ -523,6 +524,7 @@ class CribHub:
             review_scores = [(listingid, query_svd.dot(review_svd) / la.norm(review_svd), review) for listingid, review_svd, review in reviews_svd]
             top_airbnb_reviews = sorted(review_scores, key = lambda x: x[1], reverse = True)[:10]
 
+            query_svd = self.get_query_svd(query, self.nytimes_word_to_index, self.nytimes_idf_values, self.nytimes_words_compressed)
             ny_review_ids =  self.nytimes_nbhd_to_review[neighborhood]
             ny_review_svd_str = self.get_nyt_review_scores(ny_review_ids)
             ny_review_svd = [(listing_id, np.fromstring(review_svd, dtype='float64', count=50)) for listing_id, review_svd in ny_review_svd_str]
@@ -532,6 +534,7 @@ class CribHub:
             top_reviews = top_airbnb_reviews
             if (top_reviews[0][1] == 0.0):
                 top_reviews = top_nyt_reviews
+            print(top_nyt_reviews)
 
             return top_reviews #, sorted_sentiment_reviews[10:], sorted_sentiment_reviews[:10]
 
