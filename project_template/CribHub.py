@@ -290,64 +290,17 @@ class CribHub:
         for nbhd in airbnb_only:
             count = len(set(self.neighborhood_to_listing_ids[nbhd]))
             neighborhood_to_score[nbhd] = a*airbnb_scores[nbhd]*math.log(count,6)
-<<<<<<< HEAD
-            # if(count < 10):
-            #     neighborhood_to_score[nbhd] = a*airbnb_scores[nbhd]*range1
-            # elif(count >= 10 and count < 50):
-            #     neighborhood_to_score[nbhd] = a*airbnb_scores[nbhd]*range2
-            # else:
-            #     neighborhood_to_score[nbhd] = a*airbnb_scores[nbhd]
-            
-=======
 
->>>>>>> 50484072f67ac15557becbd382bcea8f456f4160
         # only nytimes neighborhoods
         for nbhd in nytimes_only:
             neighborhood_to_score[nbhd] = b*nytimes_scores[nbhd]
             self.neighborhood_to_listing_ids[nbhd] = []
-<<<<<<< HEAD
-    
-        return neighborhood_to_score
-
-#ORIGINAL CODE
-##########################################################################################
-    # def combine_scores(self, airbnb_scores, nytimes_scores):
-    #     a = 0.8
-    #     b = 0.2
-    #     airbnb = set(airbnb_scores.keys())
-    #     nytimes = set(nytimes_scores.keys())
-    #     all_neighorhoods = airbnb.union(nytimes)
-    #     both = airbnb.intersection(nytimes)
-    #     airbnb_only = airbnb - both
-    #     nytimes_only = nytimes - both
-    
-    #     neighborhood_to_score = {}
-    
-    #     # neighborhood in both airbnb & nytimes -- CLEAN THIS
-    #     for nbhd in both:
-    #         neighborhood_to_score[nbhd] = a*airbnb_scores[nbhd] + b*nytimes_scores[nbhd]
-    #     # only airbnb neighborhoods
-    #     for nbhd in airbnb_only:
-    #         neighborhood_to_score[nbhd] = a*airbnb_scores[nbhd]
-    #     # only nytimes neighborhoods
-    #     for nbhd in nytimes_only:
-    #         neighborhood_to_score[nbhd] = b*nytimes_scores[nbhd]
-    #         self.neighborhood_to_listing_ids[nbhd] = []
-    
-    #     # code to check whether there aren't any results
-    #     # if all(v == 0 for v in neighborhood_to_score.values()):
-    #     #     print ("NO RESULTS AVAILABLE -------")
-    #     return neighborhood_to_score
-############################################################################################
-
-=======
 
         # code to check whether there aren't any results
         empty_results = False
         if all(v == 0 for v in neighborhood_to_score.values()):
             empty_results = True
         return neighborhood_to_score, empty_results
->>>>>>> 50484072f67ac15557becbd382bcea8f456f4160
 
 
     # new function
