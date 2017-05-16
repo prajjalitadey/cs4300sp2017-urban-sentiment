@@ -4,6 +4,7 @@ import json
 import urllib2
 from config import config
 from Loader import listing_id_to_listing_db
+from CribHub import ___
  
 class NumpyEncoder(json.JSONEncoder):
 
@@ -132,12 +133,69 @@ def get_text(listing_id):
     finally:
         if conn is not None:
             conn.close()
+
+def create_reviews_table():
+    """ create tables in the PostgreSQL database"""
+    commands = (
+        """
+        CREATE TABLE airbnb_review_id_to_vec(
+            review_id VARCHAR PRIMARY KEY,
+            vec VARCHAR NOT NULL );
+        """,)
+    conn = None
+    try:
+        # read the connection parameters
+        params = config()
+        # connect to the PostgreSQL server
+        conn = psycopg2.connect(**params)
+        cur = conn.cursor()
+        # create table one by one
+        for command in commands:
+            cur.execute(command)
+        # close communication with the PostgreSQL database server
+        cur.close()
+        # commit the changes
+        conn.commit()
+    except (Exception, psycopg2.DatabaseError) as error:
+        print(error)
+    finally:
+        if conn is not None:
+            conn.close()
+
+def insert_values_to_review_table(airbnb_review_id_to_vec_dict):
+    """ insert multiple vendors into the vendors table  """
+    sql = "INSERT INTO airbnb_review_id_to_vec VALUES (%s, %s)"
+    args = [(key, val) for key, val in listingid_to_text.iteritems()]
+    conn = None
+    try:
+        # read database configuration
+        params = config()
+        # connect to the PostgreSQL database
+        conn = psycopg2.connect(**params)
+        # create a new cursor
+        cur = conn.cursor()
+        
+        print("here")
+        # execute the INSERT statement
+        cur.executemany(sql, args)
+        # commit the changes to the database
+        conn.commit()
+        # close communication with the database
+        cur.close()
+    except (Exception, psycopg2.DatabaseError) as error:
+        print(error)
+    finally:
+        if conn is not None:
+            conn.close()
     
  
 if __name__ == '__main__':    
     #listing_id to listing dict
     #file = urllib2.urlopen('https://s3.amazonaws.com/cribble0108/airbnb_listing_id_to_listing.json')
-    listingid_to_text = listing_id_to_listing_db()
+    #listingid_to_text = listing_id_to_listing_db()
     #create_tables()
-    insert_values(listingid_to_text)
-    get_text(2515)
+    #insert_values(listingid_to_text)
+    #get_text(2515)
+    #create_reviews_table()
+    cribhub = CribHub()
+    insert_values_to_review_table()
