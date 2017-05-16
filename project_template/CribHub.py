@@ -103,8 +103,8 @@ class CribHub:
         file = urllib2.urlopen('https://s3.amazonaws.com/cribble0108/nytimes_word_to_index.json')
         self.nytimes_word_to_index = json.load(file, encoding='utf8')
         #neighborhood to review_ids (dictionary)
-        # file = urllib2.urlopen('https://s3.amazonaws.com/cribble0108/nyt_nbhd_to_review.json')
-        # self.nytimes_nbhd_to_review = json.load(file, encoding='utf8')
+        file = urllib2.urlopen('https://s3.amazonaws.com/cribble0108/nyt_nbhd_to_review.json')
+        self.nytimes_nbhd_to_review = json.load(file, encoding='utf8')
         #listing_id to neighborhood
         file = urllib2.urlopen('https://s3.amazonaws.com/cribble0108/nyt_id_to_review.json')
         self.nytimes_id_to_review = json.load(file, encoding='utf8')
@@ -153,16 +153,16 @@ class CribHub:
     def generateAirbnbReviewVectors(self):
         review_dict = {}
 
-    #     for nbhd in self.neighborhood_to_listing_ids.keys():
-    #         nbhd_ids = self.neighborhood_to_listing_ids[nbhd]
-    #         listing_ids = [x for x in nbhd_ids]
+        for nbhd in self.neighborhood_to_listing_ids.keys():
+            nbhd_ids = self.neighborhood_to_listing_ids[nbhd]
+            listing_ids = [x for x in nbhd_ids]
 
-    #         for listing_id in listing_ids:
-    #             text_output = self.get_text([listing_id])
-    #             listing_text = text_output[0][1]
-    #             reviews = listing_text.split("-----")
-    #             for i in range(len(reviews)):
-    #                 review_dict[str(listing_id)+"X"+str(i)] = np.array_str(self.get_query_svd(reviews[i], self.airbnb_word_to_index, self.airbnb_idf_values, self.airbnb_words_compressed))
+            for listing_id in listing_ids:
+                text_output = self.get_text([listing_id])
+                listing_text = text_output[0][1]
+                reviews = listing_text.split("-----")
+                for i in range(len(reviews)):
+                    review_dict[str(listing_id)+"X"+str(i)] = np.array_str(self.get_query_svd(reviews[i], self.airbnb_word_to_index, self.airbnb_idf_values, self.airbnb_words_compressed))
 
         return review_dict
 
@@ -410,8 +410,6 @@ class CribHub:
 
         # print("IN HANDLE QUERY")
 
-        self.generateNYTReviewVectors()
-
         query_criteria = query.split(",")
         if len(query_criteria) > 1:
             query_criteria.append(query)
@@ -634,14 +632,56 @@ class CribHub:
         reviews_svd = [(listing, self.get_query_svd(review, self.airbnb_word_to_index, self.airbnb_idf_values, self.airbnb_words_compressed), review)
                        for listing, reviews in all_reviews for review in reviews]
         review_scores = [(listingid, query_svd.dot(review_svd) / la.norm(review_svd), review) for listingid, review_svd, review in reviews_svd]
-        top_reviews = sorted(review_scores, key = lambda x: x[1], reverse = True)[:10]
+        top_airbnb_reviews = sorted(review_scores, key = lambda x: x[1], reverse = True)[:10]
+
+        ny_review_ids =  self.nytimes_nbhd_to_review[neighborhood]
+        ny_review_svd = self.get_nyt_review_scores(ny_review_ids)
+        print(ny_review_svd)
+        ny_review_scores = [(listingid[0:len(listingid)-1], query_svd.dot(review_svd) / la.norm(review_svd), self.nytimes_id_to_review[listingid[0:len(listingid)-1]]) for listingid, review_svd in ny_review_svd]
+        top_nyt_reviews = sorted(ny_review_scores, key = lambda x: x[1], reverse = True)[:10]
+
+        top_reviews = top_airbnb_reviews
+        if (top_reviews[0][1] == 0.0):
+            top_reviews = top_nyt_reviews
 
         return top_reviews #, sorted_sentiment_reviews[10:], sorted_sentiment_reviews[:10]
+
+    def get_nyt_review_scores(self, nyt_reviews):
+        conn = None
+        nyt_reviews = [str(review) + "N" for review in nyt_reviews]
+        print(nyt_reviews)
+        try:
+            params = config()
+            conn = psycopg2.connect(**params)
+            cur = conn.cursor()
+            cur.execute("SELECT * FROM nytimes_review_id_to_vec WHERE (review_id LIKE (%s))", nyt_reviews)
+            rows = cur.fetchall()
+            print("-" * 10)
+            print(rows)
+            return rows
+        except (Exception, psycopg2.DatabaseError) as error:
+            self.conn.rollback()
+
+
+
 
 
     def get_best_review_for_text(self, query_svd, text):
         reviews = text.split("-----")
+        ####################### REPLACE FOLLOWING LINE, CALL DATABASE INSTEAD #######################
         reviews_svd = [(review, self.get_query_svd(review, self.airbnb_word_to_index, self.airbnb_idf_values, self.airbnb_words_compressed)) for review in reviews]
         review_scores = [(review, query_svd.dot(review_svd)) for review, review_svd in reviews_svd]
         top_review = sorted(review_scores, key=lambda x: x[1], reverse=True)[0]
         return top_review
+
+
+
+if __name__ == "__main__":
+
+    cribhub = CribHub()
+    while True:
+        query = raw_input('query: ')
+        neighborhood = raw_input('neighborhood: ')
+        x = cribhub.get_neighborhood_information(query, neighborhood)
+        print(x)
+
