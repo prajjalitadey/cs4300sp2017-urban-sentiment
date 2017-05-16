@@ -150,21 +150,21 @@ class CribHub:
 
     #Gets out a list of tuples of form [(listing_id, review)]
 
-    def generateReviewVectors(self):
-        review_dict = {}
+    # def generateReviewVectors(self):
+    #     review_dict = {}
 
-        for nbhd in self.neighborhood_to_listing_ids.keys():
-            nbhd_ids = self.neighborhood_to_listing_ids[nbhd]
-            listing_ids = [x for x in nbhd_ids]
+    #     for nbhd in self.neighborhood_to_listing_ids.keys():
+    #         nbhd_ids = self.neighborhood_to_listing_ids[nbhd]
+    #         listing_ids = [x for x in nbhd_ids]
 
-            for listing_id in listing_ids:
-                text_output = self.get_text([listing_id])
-                listing_text = text_output[0][1]
-                reviews = listing_text.split("-----")
-                for i in range(len(reviews)):
-                    review_dict[str(listing_id)+"X"+str(i)] = np.array_str(self.get_query_svd(reviews[i], self.airbnb_word_to_index, self.airbnb_idf_values, self.airbnb_words_compressed))
+    #         for listing_id in listing_ids:
+    #             text_output = self.get_text([listing_id])
+    #             listing_text = text_output[0][1]
+    #             reviews = listing_text.split("-----")
+    #             for i in range(len(reviews)):
+    #                 review_dict[str(listing_id)+"X"+str(i)] = np.array_str(self.get_query_svd(reviews[i], self.airbnb_word_to_index, self.airbnb_idf_values, self.airbnb_words_compressed))
 
-        return review_dict
+    #     return review_dict
             
     def get_listing_score(self, query_svd, listing_id):
         #listing_id = "13571116";
@@ -393,9 +393,9 @@ class CribHub:
     # new function
     def handle_query(self, query):
 
-        print("IN HANDLE QUERY")
+        # print("IN HANDLE QUERY")
 
-        self.generateReviewVectors()
+        # self.generateReviewVectors()
 
         query_criteria = query.split(",")
         if len(query_criteria) > 1:
@@ -406,11 +406,7 @@ class CribHub:
         neighborhood_ranking = {}
         document_ranking = {}
 
-        print("ENTERING CRITERIA LOOP")
-
         for criteria in query_criteria:
-
-            print("LOOPING THROUGH A CRITERIA")
 
             # get neighborhood score
             a,listing_id_scores=self.score_airbnb_neighborhoods(criteria)
@@ -427,14 +423,8 @@ class CribHub:
             listing_scores = sorted(listing_scores,key=lambda x: x[1], reverse=True)
             sorted_listingids = [x[0] for x in listing_scores]
 
-            # i = 0
-
             airbnb_query_svd = self.get_query_svd(criteria, self.airbnb_word_to_index, self.airbnb_idf_values, self.airbnb_words_compressed)
-
-            listing_text = self.get_text(sorted_listingids[:10])
-
-            print("GETTING RANKINGS")
-
+            listing_text = self.get_text(sorted_listingids[:5])
             airbnb_ranking = []
 
             if listing_text:
