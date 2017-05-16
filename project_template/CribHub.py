@@ -451,7 +451,7 @@ class CribHub:
             for rid, text in self.nytimes_id_to_review.iteritems():
                 review_score = self.get_nyt_review_score(query_svd, rid)
                 nbhd_rank = nbhd_ranks[self.nytimes_id_to_neighborhood[rid]]
-                review_ranking.append(['nytimes', nbhd_rank, rid, 0.6*review_score, text])
+                review_ranking.append(['nytimes', nbhd_rank, rid, 0.3*review_score, text])
             documents = sorted(airbnb_ranking + review_ranking, key=lambda x: x[3], reverse=True)[:5]
 
             # replace full listing text for best review, for airbnb docs
@@ -561,7 +561,7 @@ class CribHub:
         for rid, text in self.nytimes_id_to_review.iteritems():
             review_score = self.get_review_score(nytimes_q_mod, rid)
             nbhd_rank = nbhd_ranks[self.nytimes_id_to_neighborhood[rid]]
-            review_ranking.append(['nytimes', nbhd_rank, rid, 0.6*review_score, text])
+            review_ranking.append(['nytimes', nbhd_rank, rid, 0.3*review_score, text])
         
         #documents = sorted(listing_ranking + review_ranking, key=lambda x: x[1])
         documents = sorted(airbnb_ranking + review_ranking, key=lambda x: x[3], reverse=True)[:5]
