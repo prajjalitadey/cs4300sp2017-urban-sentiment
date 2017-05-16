@@ -390,7 +390,8 @@ class CribHub:
             # nested_list = [self.neighborhood_to_listing_ids[nbhd[0]] for nbhd in nbhd_scores[:5]]
             # airbnb_listing_ids = list(set([lid for sublist in nested_list for lid in sublist]))
             sorted(listing_scores,key=lambda x: x[1], reverse=True)
-            sorted_listingids=listing_scores.sort(key=lambda x: x[1], reverse=True)
+            print(listing_scores)
+            #sorted_listingids=listing_scores.sort(key=lambda x: x[1], reverse=True)
             sorted_listingids=[x[0] for x in sorted_listingids]
             print(sorted_listingids)
             i = 0
