@@ -137,6 +137,10 @@ class CribHub:
         self.conn = psycopg2.connect(**params)
         self.cur = self.conn.cursor()
         # self.conn.autocommit(True)
+        
+        
+        #######GLOBAL##########
+        self.num_listings = 31121
 
         #######GLOBAL##########
         self.num_listings = 31121
@@ -165,15 +169,15 @@ class CribHub:
 
         return review_dict
 
-
     def generateNYTReviewVectors(self):
         review_dict = {}
+
         for review_id in self.nytimes_id_to_review.keys():
             review_text = self.nytimes_id_to_review[review_id]
-            review_dict[str(review_id)+"N"] = np.array_str(self.get_query_svd(review_text, self.nytimes_word_to_index, self.nytimes_idf_values, self.nytimes_words_compressed))
+            review_dict[str(review_id)] = np.array_str(self.get_query_svd(review_text, self.nytimes_word_to_index, self.nytimes_idf_values, self.nytimes_words_compressed))
+
         return review_dict
-
-
+            
     def get_listing_score(self, query_svd, listing_id):
         idx = self.airbnb_id_to_idx[listing_id]
         tfidf_svd = np.array(self.airbnb_tfidf_svd[idx])
@@ -262,7 +266,6 @@ class CribHub:
         return neighborhood_to_score
 
 
-
     def combine_scores(self, airbnb_scores, nytimes_scores):
         a = 0.8
         b = 0.2
@@ -274,12 +277,13 @@ class CribHub:
         both  = airbnb.intersection(nytimes)
         airbnb_only = airbnb - both
         nytimes_only = nytimes - both
-
+    
         neighborhood_to_score = {}
-
+    
         # neighborhood in both airbnb & nytimes -- CLEAN THIS
         for nbhd in both:
             count = len(set(self.neighborhood_to_listing_ids[nbhd]))
+
             neighborhood_to_score[nbhd] = a*airbnb_scores[nbhd]*math.log(count,6) + b*nytimes_scores[nbhd]
 
         # only airbnb neighborhoods
@@ -297,7 +301,6 @@ class CribHub:
         if all(v == 0 for v in neighborhood_to_score.values()):
             empty_results = True
         return neighborhood_to_score, empty_results
-
 
 
     # new function
@@ -479,7 +482,6 @@ class CribHub:
         return self.topic_to_neighborhoods[topic]
 
 
-
     # Returns sentiment from Lillian Lee's text-processing API: http://text-processing.com/docs/sentiment.html
     # Input: text string
     # Output: dictionary
@@ -506,43 +508,35 @@ class CribHub:
             self.conn.rollback()
 
     def get_neighborhood_information(self, query, neighborhood):
-        query_svd = self.get_query_svd(query, self.airbnb_word_to_index, self.airbnb_idf_values, self.airbnb_words_compressed)
-        listing_ids = self.neighborhood_to_listing_ids[neighborhood]
-        listings_to_score = [(listing, self.get_listing_score(query_svd, str(listing))) for listing in listing_ids]
-        best_five, _ = zip(*sorted(listings_to_score, key=lambda x: x[1], reverse=True)[:5])
-        all_reviews = self.get_text(best_five, separated=True)
-        #sentiment_reviews = [(listing, self.get_sentiment(review), review) for listing, reviews in all_reviews for review in reviews]
-        #sorted_sentiment_reviews = sorted(sentiment_reviews, key = lambda x: x[1], reverse = True)
-        reviews_svd = [(listing, self.get_query_svd(review, self.airbnb_word_to_index, self.airbnb_idf_values, self.airbnb_words_compressed), review)
-                       for listing, reviews in all_reviews for review in reviews]
-        review_scores = [(listingid, query_svd.dot(review_svd) / la.norm(review_svd), review) for listingid, review_svd, review in reviews_svd]
-        top_airbnb_reviews = sorted(review_scores, key=lambda x: x[1], reverse=True)[:10]
+            print(query)
+            query_svd = self.get_query_svd(query, self.airbnb_word_to_index, self.airbnb_idf_values, self.airbnb_words_compressed)
+            print("-" * 30)
+            print(query_svd)
+            print("-" * 30)
+            listing_ids = self.neighborhood_to_listing_ids[neighborhood]
+            listings_to_score = [(listing, self.get_listing_score(query_svd, str(listing))) for listing in listing_ids]
+            best_five, _ = zip(*sorted(listings_to_score, key = lambda x: x[1], reverse = True)[:5])
+            all_reviews = self.get_text(best_five, separated=True)
+            #sentiment_reviews = [(listing, self.get_sentiment(review), review) for listing, reviews in all_reviews for review in reviews]
+            #sorted_sentiment_reviews = sorted(sentiment_reviews, key = lambda x: x[1], reverse = True)
+            reviews_svd = [(listing, self.get_query_svd(review, self.airbnb_word_to_index, self.airbnb_idf_values, self.airbnb_words_compressed), review)
+                           for listing, reviews in all_reviews for review in reviews]
+            review_scores = [(listingid, query_svd.dot(review_svd) / la.norm(review_svd), review) for listingid, review_svd, review in reviews_svd]
+            top_airbnb_reviews = sorted(review_scores, key = lambda x: x[1], reverse = True)[:10]
 
-        ny_review_ids = self.nytimes_nbhd_to_review[neighborhood]
-        ny_review_svd = self.get_nyt_review_scores(ny_review_ids)
+            query_svd = self.get_query_svd(query, self.nytimes_word_to_index, self.nytimes_idf_values, self.nytimes_words_compressed)
+            ny_review_ids =  self.nytimes_nbhd_to_review[neighborhood]
+            ny_review_svd_str = self.get_nyt_review_scores(ny_review_ids)
+            ny_review_svd = [(listing_id, np.fromstring(review_svd, dtype='float64', count=50)) for listing_id, review_svd in ny_review_svd_str]
+            ny_review_scores = [(listingid, query_svd.dot(review_svd) / la.norm(review_svd), self.nytimes_id_to_review[str(listingid)]) for listingid, review_svd in ny_review_svd]
+            top_nyt_reviews = sorted(ny_review_scores, key = lambda x: x[1], reverse = True)[:10]
 
-        ny_review_scores = [(listingid[0:len(listingid)-1], query_svd.dot(review_svd) / la.norm(review_svd), self.nytimes_id_to_review[listingid[0:len(listingid)-1]]) for listingid, review_svd in ny_review_svd]
-        top_nyt_reviews = sorted(ny_review_scores, key=lambda x: x[1], reverse=True)[:10]
+            top_reviews = top_airbnb_reviews
+            if (top_reviews[0][1] == 0.0):
+                top_reviews = top_nyt_reviews
+            print(top_nyt_reviews)
 
-        top_reviews = top_airbnb_reviews
-        if (top_reviews[0][1] == 0.0):
-            top_reviews = top_nyt_reviews
-
-        return top_reviews
-
-    def get_nyt_review_scores(self, nyt_reviews):
-        conn = None
-        nyt_reviews = [str(review) + "N" for review in nyt_reviews]
-        try:
-            params = config()
-            conn = psycopg2.connect(**params)
-            cur = conn.cursor()
-            cur.execute("SELECT * FROM nytimes_review_id_to_vec WHERE (review_id LIKE (%s))", nyt_reviews)
-            rows = cur.fetchall()
-            return rows
-        except (Exception, psycopg2.DatabaseError) as error:
-            self.conn.rollback()
-
+            return top_reviews #, sorted_sentiment_reviews[10:], sorted_sentiment_reviews[:10]
 
 
     def get_best_review_for_text(self, query_svd, text):
@@ -552,3 +546,20 @@ class CribHub:
         review_scores = [(review, query_svd.dot(review_svd)) for review, review_svd in reviews_svd]
         top_review = sorted(review_scores, key=lambda x: x[1], reverse=True)[:4]
         return top_review
+
+    def get_nyt_review_scores(self, nyt_reviews):
+        conn = None
+        placeholders = ", ".join(str(rid) for rid in nyt_reviews)
+        print(placeholders)
+        query = "SELECT * FROM nytimes_review_to_vec WHERE review_id IN (%s)" % placeholders
+        try:
+            params = config()
+            conn = psycopg2.connect(**params)
+            cur = conn.cursor()
+            cur.execute(query)
+            rows = cur.fetchall()
+            print("-" * 10)
+            print(rows)
+            return rows
+        except (Exception, psycopg2.DatabaseError) as error:
+            self.conn.rollback()

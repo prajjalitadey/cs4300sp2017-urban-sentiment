@@ -1,3 +1,4 @@
+
 #!/usr/bin/python
 import psycopg2
 import json
@@ -213,8 +214,8 @@ def create_reviews_table_nytimes():
     """ create tables in the PostgreSQL database"""
     commands = (
         """
-        CREATE TABLE nytimes_review_id_to_vec(
-            review_id VARCHAR PRIMARY KEY,
+        CREATE TABLE nytimes_review_to_vec(
+            review_id serial PRIMARY KEY,
             vec VARCHAR NOT NULL );
         """,)
     conn = None
@@ -239,7 +240,11 @@ def create_reviews_table_nytimes():
 
 def insert_nyt_values_to_review_table(nyt_review_id_to_vec_dict):
     """ insert multiple vendors into the vendors table  """
+<<<<<<< HEAD
+    sql = "INSERT INTO nytimes_review_to_vec VALUES (%s, %s)"
+=======
     sql = "INSERT INTO nytimes_review_id_to_vec VALUES (%s, %s)"
+>>>>>>> 50484072f67ac15557becbd382bcea8f456f4160
     args = [(key, val) for key, val in nyt_review_id_to_vec_dict.iteritems()]
     conn = None
     try:
@@ -263,16 +268,17 @@ def insert_nyt_values_to_review_table(nyt_review_id_to_vec_dict):
         if conn is not None:
             conn.close()
 
-def get_nytimes_review(listing_ids):
+def get_nytimes_review(review_ids):
 
     conn = None
-    regex = [str(listing_id) + "N" for listing_id in listing_ids]
-    print(regex)
+    placeholders = ", ".join(str(rid) for rid in review_ids)
+    print(placeholders)
+    query = "SELECT * FROM nytimes_review_to_vec WHERE review_id IN (%s)" % placeholders
     try:
         params = config()
         conn = psycopg2.connect(**params)
         cur = conn.cursor()
-        cur.execute("SELECT vec FROM nytimes_review_id_to_vec WHERE (review_id LIKE (%s))", regex)
+        cur.execute(query)
         rows = cur.fetchall()
         print(rows)
         cur.close()
@@ -291,6 +297,6 @@ if __name__ == '__main__':
     #get_text(2515)
     #create_reviews_table()
     #create_reviews_table_nytimes()
-    cribhub = CribHub()
-    print("here")
-    get_nytimes_review([1001, 1002])
+    #cribhub = CribHub()
+    #print("here")
+    #get_nytimes_review([1001, 1002])
