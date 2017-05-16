@@ -424,8 +424,8 @@ class CribHub:
                 criteria = 'all_criteria'
             neighborhood_ranking[criteria] = nbhd_scores
             document_ranking[criteria] = documents
-            #print(document_ranking)
-        return {'neighborhood_ranking': neighborhood_ranking, 'listing_ranking': document_ranking, 'query': query}
+
+        return {'neighborhood_ranking': neighborhood_ranking, 'document_ranking': document_ranking, 'query': query}
 
 
 
