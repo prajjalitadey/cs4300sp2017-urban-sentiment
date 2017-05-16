@@ -150,8 +150,8 @@ class CribHub:
 
     #Gets out a list of tuples of form [(listing_id, review)]
 
-    # def generateReviewVectors(self):
-    #     review_dict = {}
+    def generateAirbnbReviewVectors(self):
+        review_dict = {}
 
     #     for nbhd in self.neighborhood_to_listing_ids.keys():
     #         nbhd_ids = self.neighborhood_to_listing_ids[nbhd]
@@ -164,7 +164,22 @@ class CribHub:
     #             for i in range(len(reviews)):
     #                 review_dict[str(listing_id)+"X"+str(i)] = np.array_str(self.get_query_svd(reviews[i], self.airbnb_word_to_index, self.airbnb_idf_values, self.airbnb_words_compressed))
 
-    #     return review_dict
+        return review_dict
+
+
+    def generateNYTReviewVectors(self):
+        review_dict = {}
+
+        for review_id in self.nytimes_id_to_review.keys():
+            review_text = self.nytimes_id_to_review[review_id]
+            review_dict[str(review_id)+"N"] = np.array_str(self.get_query_svd(review_text, self.nytimes_word_to_index, self.nytimes_idf_values, self.nytimes_words_compressed))
+
+            print(review_dict[str(review_id)+"N"])
+
+        return review_dict
+
+
+
             
     def get_listing_score(self, query_svd, listing_id):
         #listing_id = "13571116";
@@ -395,7 +410,7 @@ class CribHub:
 
         # print("IN HANDLE QUERY")
 
-        # self.generateReviewVectors()
+        self.generateNYTReviewVectors()
 
         query_criteria = query.split(",")
         if len(query_criteria) > 1:
