@@ -150,7 +150,6 @@
 
                             $(".roccioCheck").on("click", function(e){
                                 relevantDocs.push(topListings[(e.target.name).slice(-1)][2]);
-                                console.log(relevantDocs)
                             });
 
                             // HANDLE CRITERIA CLICK
@@ -203,8 +202,6 @@
                                         listingText = topListings[i],
                                         radioVal = $('input[name=listing' + listingNumber + ']:checked').val()
 
-                                        console.log("RADIOVAL",radioVal)
-
                                     if(listingText) {
                                         if(radioVal) {
                                             feedback["relevant"].push(listingText[2]);
@@ -213,7 +210,7 @@
                                         }
 
                                     }
-
+                                    
                                 }
 
                                 feedback["relevant"] = relevantDocs;
@@ -242,13 +239,11 @@
                                         extra: feedback
                                     },
                                     success: function(response) {
-                                        console.log("success");
-
-                                        resultsDict   = JSON.parse(response),
+                                        resultsDict   = JSON.parse(response);
                                         defaultOutput = resultsDict["neighborhood_ranking"],
-                                        currentOutput = resultsDict["neighborhood_ranking"]["all_criteria"],
+                                        currentOutput = resultsDict["neighborhood_ranking"][Object.keys(resultsDict["neighborhood_ranking"])[0]],
                                         queryText     = resultsDict["query"],
-                                        topListings   = resultsDict["document_ranking"]["all_criteria"]
+                                        topListings   = resultsDict["document_ranking"][Object.keys(resultsDict["document_ranking"])[0]]
 
                                         currentCriteria = queryText;
                                         $(".search-results").empty();
@@ -554,8 +549,6 @@
                                         extra: feedback
                                     },
                                     success: function(response) {
-                                        //console.log(response);
-                                        console.log("map success");
                                         response = JSON.parse(response);
                                         var i = 1;
                                         for (let entry of response) {
