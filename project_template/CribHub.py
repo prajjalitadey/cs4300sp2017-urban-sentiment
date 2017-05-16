@@ -251,10 +251,13 @@ class CribHub:
         return neighborhood_to_score, topic_neighborhood_scores
 
 
-    def score_nytimes_neighborhoods(self, query):
-        query_svd = self.get_query_svd(query, self.nytimes_word_to_index, self.nytimes_idf_values, self.nytimes_words_compressed)
-        all_neighborhood_scores = defaultdict(list)
+    def score_nytimes_neighborhoods(self, query, vec=False):
+        if not vec:
+            query_svd = self.get_query_svd(query, self.nytimes_word_to_index, self.nytimes_idf_values, self.nytimes_words_compressed)
+        else:
+            query_svd = query
 
+        all_neighborhood_scores = defaultdict(list)
         for review_id in self.nytimes_id_to_idx.keys():
             neighborhood = self.nytimes_id_to_neighborhood[review_id]
             score_info = self.get_nyt_review_score(query_svd, review_id)
@@ -475,7 +478,8 @@ class CribHub:
 
 
     # rel & irr is in form ['airbnb', id#]
-    def rocchio(self, q, rel, irr, a=.4, b=15, c=10, clip=True):
+    def rocchio(self, q, rel, irr, a=0, b=15, c=10, clip=False):
+        print ("IN ROCCHIO FUNC")
         airbnb_wt = 0.8
         nytimes_wt = 0.2
 
@@ -490,14 +494,30 @@ class CribHub:
 
         # separate airbnb & nytimes relevant and irrelevant docs
 
+        print ("relevant: " + str(rel))
+        print ("irrelevant: " + str(irr))
+
         airbnb_rel = [str(lid) for lid in rel if str(lid) in self.airbnb_id_to_idx.keys()]
         airbnb_irr = [str(lid) for lid in irr if str(lid) in self.airbnb_id_to_idx.keys()]
         nytimes_rel = [str(rid) for rid in rel if str(rid) in self.nytimes_id_to_idx.keys()]
         nytimes_irr = [str(rid) for rid in irr if str(rid) in self.nytimes_id_to_idx.keys()]
 
+        print (airbnb_rel)
+        print (airbnb_irr)
+        print (nytimes_rel)
+        print (nytimes_irr)
+
+
+
 
         airbnb_query_vec = self.get_query_svd(q, self.airbnb_word_to_index, self.airbnb_idf_values, self.airbnb_words_compressed)
         airbnb_q_mod = a*airbnb_query_vec
+
+        print ("original airbnb query")
+        print ("--------------------------------------------------")
+        print (airbnb_query_vec)
+        print ("--------------------------------------------------")
+
 
         # airbnb list of vectors
         airbnb_rel_vecs = [self.airbnb_tfidf_svd[self.airbnb_id_to_idx[aid]] for aid in airbnb_rel]
@@ -509,9 +529,19 @@ class CribHub:
             airbnb_irr_avg = np.array(airbnb_irr_vecs).mean(0)
             airbnb_q_mod -= c*airbnb_irr_avg
 
+        print ("new airbnb query")
+        print ("--------------------------------------------------")
+        print (airbnb_q_mod)
+        print ("--------------------------------------------------")
+
 
         nytimes_query_vec = self.get_query_svd(q, self.nytimes_word_to_index, self.nytimes_idf_values, self.nytimes_words_compressed)
         nytimes_q_mod = a*nytimes_query_vec
+
+        print ("old nytimes query")
+        print ("--------------------------------------------------")
+        print (nytimes_query_vec)
+        print ("--------------------------------------------------")
 
         # nytimes list of vectors
         nytimes_rel_vecs = [self.nytimes_tfidf_svd[self.nytimes_id_to_idx[nid]] for nid in nytimes_rel]
@@ -522,6 +552,11 @@ class CribHub:
         if len(nytimes_irr_vecs) > 0:
             nytimes_irr_avg = np.array(nytimes_irr_vecs).mean(0)
             nytimes_q_mod -= c*nytimes_irr_avg
+
+        print ("new nytimes query")
+        print ("--------------------------------------------------")
+        print (nytimes_q_mod)
+        print ("--------------------------------------------------")
 
 
         if clip:
@@ -538,6 +573,8 @@ class CribHub:
         document_ranking = {}
 
         a, listing_id_scores = self.score_airbnb_neighborhoods(airbnb_q_mod, True)
+        b = self.score_nytimes_neighborhoods(nytimes_q_mod, True)
+        scores = self.combine_scores(a, b)
 
         nbhd_scores = sorted([[nbhd, score] for nbhd, score in scores.iteritems()], key=lambda x: x[1], reverse=True)
         nbhd_scores_enum = list(enumerate(nbhd_scores))
@@ -565,7 +602,7 @@ class CribHub:
             review_score = self.get_review_score(nytimes_q_mod, rid)
             nbhd_rank = nbhd_ranks[self.nytimes_id_to_neighborhood[rid]]
             review_ranking.append(['nytimes', nbhd_rank, rid, 0.3*review_score, text])
-        
+
         #documents = sorted(listing_ranking + review_ranking, key=lambda x: x[1])
         documents = sorted(airbnb_ranking + review_ranking, key=lambda x: x[3], reverse=True)[:5]
         documents = [[doc[0], doc[1], doc[2], doc[3], re.sub('\\.', '', self.get_best_review_for_text(airbnb_query_svd, doc[4])[0])] if doc[0] is 'airbnb' else [doc[0], doc[1], doc[2], doc[3], re.sub('\\.', '', doc[4])] for doc in documents]
