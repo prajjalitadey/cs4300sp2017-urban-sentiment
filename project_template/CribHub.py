@@ -534,7 +534,9 @@ class CribHub:
             top_reviews = top_airbnb_reviews
             if (top_reviews[0][1] == 0.0):
                 top_reviews = top_nyt_reviews
-            print(top_nyt_reviews)
+
+            if top_reviews == None:
+                top_reviews = top_airbnb_reviews
 
             return top_reviews #, sorted_sentiment_reviews[10:], sorted_sentiment_reviews[:10]
 

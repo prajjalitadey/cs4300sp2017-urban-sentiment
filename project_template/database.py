@@ -167,8 +167,6 @@ def insert_airbnb_values_to_review_table(airbnb_review_id_to_vec_dict):
     sql = "INSERT INTO airbnb_review_to_vec VALUES (%s, %s)"
     args = [(key, val) for key, val in airbnb_review_id_to_vec_dict.iteritems()]
 
-    dataText = ','.join(cur.mongrify('(%s, %s)', row) for row in args)
-
     conn = None
     try:
         # read database configuration
@@ -177,7 +175,8 @@ def insert_airbnb_values_to_review_table(airbnb_review_id_to_vec_dict):
         conn = psycopg2.connect(**params)
         # create a new cursor
         cur = conn.cursor()
-        
+        dataText = ','.join(cur.mongrify('(%s, %s)', row) for row in args)
+
         print("here")
         # execute the INSERT statement
         cur.execute("INSERT INTO airbnb_review_id_to_vec VALUES " + dataText)
@@ -240,11 +239,8 @@ def create_reviews_table_nytimes():
 
 def insert_nyt_values_to_review_table(nyt_review_id_to_vec_dict):
     """ insert multiple vendors into the vendors table  """
-<<<<<<< HEAD
     sql = "INSERT INTO nytimes_review_to_vec VALUES (%s, %s)"
-=======
-    sql = "INSERT INTO nytimes_review_id_to_vec VALUES (%s, %s)"
->>>>>>> 50484072f67ac15557becbd382bcea8f456f4160
+
     args = [(key, val) for key, val in nyt_review_id_to_vec_dict.iteritems()]
     conn = None
     try:
