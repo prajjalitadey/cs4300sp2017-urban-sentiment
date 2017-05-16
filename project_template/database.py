@@ -1,3 +1,4 @@
+
 #!/usr/bin/python
 import psycopg2
 import json
@@ -137,7 +138,7 @@ def create_reviews_table():
     """ create tables in the PostgreSQL database"""
     commands = (
         """
-        CREATE TABLE airbnb_review_id_to_vec(
+        CREATE TABLE airbnb_review_to_vec(
             review_id VARCHAR PRIMARY KEY,
             vec VARCHAR NOT NULL );
         """,)
@@ -161,10 +162,13 @@ def create_reviews_table():
         if conn is not None:
             conn.close()
 
-def insert_values_to_review_table(airbnb_review_id_to_vec_dict):
+def insert_airbnb_values_to_review_table(airbnb_review_id_to_vec_dict):
     """ insert multiple vendors into the vendors table  """
-    sql = "INSERT INTO airbnb_review_id_to_vec VALUES (%s, %s)"
+    sql = "INSERT INTO airbnb_review_to_vec VALUES (%s, %s)"
     args = [(key, val) for key, val in airbnb_review_id_to_vec_dict.iteritems()]
+
+    dataText = ','.join(cur.mongrify('(%s, %s)', row) for row in args)
+
     conn = None
     try:
         # read database configuration
@@ -176,7 +180,7 @@ def insert_values_to_review_table(airbnb_review_id_to_vec_dict):
         
         print("here")
         # execute the INSERT statement
-        cur.executemany(sql, args)
+        cur.execute("INSERT INTO airbnb_review_id_to_vec VALUES " + dataText)
         # commit the changes to the database
         conn.commit()
         # close communication with the database
@@ -206,12 +210,12 @@ def get_airbnb_review(listing_id):
             conn.close()
 
 
- def create_reviews_table_nytimes():
+def create_reviews_table_nytimes():
     """ create tables in the PostgreSQL database"""
     commands = (
         """
-        CREATE TABLE nytimes_review_id_to_vec(
-            review_id VARCHAR PRIMARY KEY,
+        CREATE TABLE nytimes_review_to_vec(
+            review_id serial PRIMARY KEY,
             vec VARCHAR NOT NULL );
         """,)
     conn = None
@@ -234,10 +238,10 @@ def get_airbnb_review(listing_id):
         if conn is not None:
             conn.close()
 
-def insert_values_to_review_table(nyt_review_id_to_vec_dict):
+def insert_nyt_values_to_review_table(nyt_review_id_to_vec_dict):
     """ insert multiple vendors into the vendors table  """
-    sql = "INSERT INTO nytimes_review_id_to_vec VALUES (%s, %s)"
-    args = [(key, val) for key, val in airbnb_review_id_to_vec_dict.iteritems()]
+    sql = "INSERT INTO nytimes_review_to_vec VALUES (%s, %s)"
+    args = [(key, val) for key, val in nyt_review_id_to_vec_dict.iteritems()]
     conn = None
     try:
         # read database configuration
@@ -260,15 +264,17 @@ def insert_values_to_review_table(nyt_review_id_to_vec_dict):
         if conn is not None:
             conn.close()
 
-def get_nytimes_review(listing_id):
+def get_nytimes_review(review_ids):
 
     conn = None
-    regex = str(listing_id) + "N.+"
+    placeholders = ", ".join(str(rid) for rid in review_ids)
+    print(placeholders)
+    query = "SELECT * FROM nytimes_review_to_vec WHERE review_id IN (%s)" % placeholders
     try:
         params = config()
         conn = psycopg2.connect(**params)
         cur = conn.cursor()
-        cur.execute("SELECT vec FROM airbnb_review_id_to_vec WHERE (review_id REGEXP (%s))", regex)
+        cur.execute(query)
         rows = cur.fetchall()
         print(rows)
         cur.close()
@@ -286,6 +292,9 @@ if __name__ == '__main__':
     #insert_values(listingid_to_text)
     #get_text(2515)
     #create_reviews_table()
-    cribhub = CribHub()
+    #create_reviews_table_nytimes()
+    #cribhub = CribHub()
     print("here")
-    insert_values_to_review_table(cribhub.generateReviewVectors())
+    #create_reviews_table_nytimes()
+    #insert_nyt_values_to_review_table(cribhub.generateNYTReviewVectors())
+    get_nytimes_review([1001, 1002])
