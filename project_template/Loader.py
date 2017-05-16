@@ -10,6 +10,7 @@ from sklearn.preprocessing import normalize
 import numpy as np
 import base64
 import nltk
+import re
 
 class NumpyEncoder(json.JSONEncoder):
 
@@ -106,7 +107,7 @@ def listing_id_to_listing():
 # airbnb function
 def listing_id_to_listing_db():
     print("Listing_ID_to_listing Function")
-    data_frame = pd.DataFrame.from_csv("/Users/prajjalitadey/Documents/Spring2017/4300/cs4300sp2017-urban-sentiment/jsons/nyc_combination.csv", index_col=None)
+    data_frame = pd.DataFrame.from_csv("/Users/talhabaig/Documents/cs4300sp2017-urban-sentiment/jsons/nyc_combination.csv", index_col=None)
     # data_frame = pd.DataFrame.from_csv("/Users/prajjalitadey/Documents/Spring2017/4300/cs4300sp2017-urban-sentiment/jsons/test.csv", index_col=None)
 
     i = 0

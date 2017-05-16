@@ -3,6 +3,7 @@ import psycopg2
 import json
 import urllib2
 from config import config
+from Loader import listing_id_to_listing_db
  
 class NumpyEncoder(json.JSONEncoder):
 
@@ -65,7 +66,7 @@ def create_tables():
     """ create tables in the PostgreSQL database"""
     commands = (
         """
-        CREATE TABLE listingid_to_text(
+        CREATE TABLE listingid_to_text_english(
             listing_id serial PRIMARY KEY,
             reviews VARCHAR NOT NULL );
         """,)
@@ -91,7 +92,7 @@ def create_tables():
             
 def insert_values(listingid_to_text):
     """ insert multiple vendors into the vendors table  """
-    sql = "INSERT INTO listingid_to_text VALUES (%s, %s)"
+    sql = "INSERT INTO listingid_to_text_english VALUES (%s, %s)"
     args = [(key, val) for key, val in listingid_to_text.iteritems()]
     conn = None
     try:
@@ -135,6 +136,8 @@ def get_text(listing_id):
  
 if __name__ == '__main__':    
     #listing_id to listing dict
-    file = urllib2.urlopen('https://s3.amazonaws.com/cribble0108/airbnb_listing_id_to_listing.json')
-    listingid_to_text = json.load(file, encoding='utf8')
+    #file = urllib2.urlopen('https://s3.amazonaws.com/cribble0108/airbnb_listing_id_to_listing.json')
+    listingid_to_text = listing_id_to_listing_db()
+    #create_tables()
+    insert_values(listingid_to_text)
     get_text(2515)

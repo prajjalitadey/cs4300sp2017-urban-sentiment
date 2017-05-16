@@ -132,6 +132,10 @@ class CribHub:
         self.conn = psycopg2.connect(**params)
         self.cur = self.conn.cursor()
         # self.conn.autocommit(True)
+        
+        
+        #######GLOBAL##########
+        self.num_listings = 31121
 
 
     def get_listing_score(self, query_svd, listing_id):
@@ -221,35 +225,74 @@ class CribHub:
         return neighborhood_to_score
 
 
-
     def combine_scores(self, airbnb_scores, nytimes_scores):
-        a = 0.8
-        b = 0.2
+        a = 1.0
+        b = 0.00
+    
         airbnb = set(airbnb_scores.keys())
         nytimes = set(nytimes_scores.keys())
         all_neighorhoods = airbnb.union(nytimes)
         both = airbnb.intersection(nytimes)
         airbnb_only = airbnb - both
         nytimes_only = nytimes - both
-
+    
         neighborhood_to_score = {}
-
+    
         # neighborhood in both airbnb & nytimes -- CLEAN THIS
         for nbhd in both:
-            neighborhood_to_score[nbhd] = a*airbnb_scores[nbhd] + b*nytimes_scores[nbhd]
+            count = len(set(self.neighborhood_to_listing_ids[nbhd]))
+            print("-------------------")
+            print(a*airbnb_scores[nbhd] + b*nytimes_scores[nbhd])
+            score = a*airbnb_scores[nbhd]*(float(count)/float(self.num_listings)) + b*nytimes_scores[nbhd]
+            print(score)
+            neighborhood_to_score[nbhd] = score
+    
         # only airbnb neighborhoods
         for nbhd in airbnb_only:
-            neighborhood_to_score[nbhd] = a*airbnb_scores[nbhd]
+            count = len(set(self.neighborhood_to_listing_ids[nbhd]))
+            print("--------B-----------")
+            print(a*airbnb_scores[nbhd])
+            score = a*airbnb_scores[nbhd]*(float(count)/float(self.num_listings)) 
+            print(score)
+            neighborhood_to_score[nbhd] = score
+    
         # only nytimes neighborhoods
         for nbhd in nytimes_only:
             neighborhood_to_score[nbhd] = b*nytimes_scores[nbhd]
             self.neighborhood_to_listing_ids[nbhd] = []
-
-        # code to check whether there aren't any results
-        # if all(v == 0 for v in neighborhood_to_score.values()):
-        #     print ("NO RESULTS AVAILABLE -------")
+    
         return neighborhood_to_score
 
+#ORIGINAL CODE
+##########################################################################################
+    # def combine_scores(self, airbnb_scores, nytimes_scores):
+    #     a = 0.8
+    #     b = 0.2
+    #     airbnb = set(airbnb_scores.keys())
+    #     nytimes = set(nytimes_scores.keys())
+    #     all_neighorhoods = airbnb.union(nytimes)
+    #     both = airbnb.intersection(nytimes)
+    #     airbnb_only = airbnb - both
+    #     nytimes_only = nytimes - both
+    
+    #     neighborhood_to_score = {}
+    
+    #     # neighborhood in both airbnb & nytimes -- CLEAN THIS
+    #     for nbhd in both:
+    #         neighborhood_to_score[nbhd] = a*airbnb_scores[nbhd] + b*nytimes_scores[nbhd]
+    #     # only airbnb neighborhoods
+    #     for nbhd in airbnb_only:
+    #         neighborhood_to_score[nbhd] = a*airbnb_scores[nbhd]
+    #     # only nytimes neighborhoods
+    #     for nbhd in nytimes_only:
+    #         neighborhood_to_score[nbhd] = b*nytimes_scores[nbhd]
+    #         self.neighborhood_to_listing_ids[nbhd] = []
+    
+    #     # code to check whether there aren't any results
+    #     # if all(v == 0 for v in neighborhood_to_score.values()):
+    #     #     print ("NO RESULTS AVAILABLE -------")
+    #     return neighborhood_to_score
+############################################################################################
 
     # def handle_query(self, query):
     #     query_criteria = query.split(",")
@@ -297,17 +340,6 @@ class CribHub:
 
     #     # 'listing_ranking': listing_ranking,
     #     return {'neighborhood_ranking': neighborhood_ranking, 'listing_ranking': listing_ranking, 'review_ranking': review_ranking, 'query': query}
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -550,7 +582,7 @@ class CribHub:
         query_svd = self.get_query_svd(query, self.airbnb_word_to_index, self.airbnb_idf_values, self.airbnb_words_compressed)
         listing_ids = self.neighborhood_to_listing_ids[neighborhood]
         listings_to_score = [(listing, self.get_listing_score(query_svd, str(listing))) for listing in listing_ids]
-        best_five, _ = zip(*sorted(listings_to_score, key = lambda x: x[1], reverse = True)[:5])
+        best_five, _ = zip(*sorted(listings_to_score, key = lambda x: x[1], reverse = True))
         all_reviews = self.get_text(best_five, separated=True)
         #sentiment_reviews = [(listing, self.get_sentiment(review), review) for listing, reviews in all_reviews for review in reviews]
         #sorted_sentiment_reviews = sorted(sentiment_reviews, key = lambda x: x[1], reverse = True)
@@ -576,3 +608,15 @@ class CribHub:
         review_scores = [(review, query_svd.dot(review_svd) / (la.norm(review_svd)+1)) for review, review_svd in reviews_svd]
         top_review = sorted(review_scores, key=lambda x: x[1], reverse=True)[0]
         return top_review
+
+if __name__ == "__main__":
+    cribhub = CribHub()
+    while True:
+        query = raw_input('query: ')
+        neighborhood = raw_input('neighborhood: ')
+        x = cribhub.get_neighborhood_information(query, neighborhood)
+        print(x)
+        
+
+
+
