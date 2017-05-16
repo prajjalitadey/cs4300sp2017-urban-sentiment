@@ -433,7 +433,7 @@ class CribHub:
             neighborhood_ranking[criteria] = nbhd_scores
             document_ranking[criteria] = documents
 
-        return {'neighborhood_ranking': neighborhood_ranking, 'listing_ranking': document_ranking, 'query': query}
+        return {'neighborhood_ranking': neighborhood_ranking, 'document_ranking': document_ranking, 'query': query}
 
         # return {'neighborhood_ranking': neighborhood_ranking, 'listing_ranking': listing_ranking, 'review_ranking': review_ranking, 'query': query}
 

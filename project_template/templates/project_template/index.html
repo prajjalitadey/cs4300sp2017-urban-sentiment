@@ -57,14 +57,15 @@
                             var resultsDict   = JSON.parse(response),
                                 defaultOutput = resultsDict["neighborhood_ranking"]["all_criteria"],
                                 currentOutput = resultsDict["neighborhood_ranking"]["all_criteria"],
-                                queryText     = resultsDict["query"]
+                                queryText     = resultsDict["query"],
+                                topDocuments  = resultsDict["document_ranking"],
                                 topListings   = []
 
                             currentCriteria = queryText;
 
-                            if(resultsDict["listing_ranking"]) {
-                                if(resultsDict["listing_ranking"]["all_criteria"]) {
-                                    topListings = resultsDict["listing_ranking"]["all_criteria"];
+                            if(resultsDict["document_ranking"]) {
+                                if(resultsDict["document_ranking"]["all_criteria"]) {
+                                    topListings = resultsDict["document_ranking"]["all_criteria"];
                                 }
                             }
 
@@ -102,46 +103,46 @@
                                 $(".user-query").append("<span class='criteria' id='" + spliced +"'>" + criteria + "</span>");    
                             }
 
+                            console.log("HIDFJLKSFJSLDKJ")
+                            console.log(topListings)
+
                             // TOP LISTINGS UI
-                            for (var i = 0 ; i < 4 ; i++) {
-                                if(topListings.length > 0 && topListings[i]) {
 
-                                    listingText = topListings[i][2];
-                                    listingText = listingText.split("-----")
+                            var queryWords = queryText.replace(/,/g , " ");
+                                queryWords = queryWords.split(" ")
 
-                                    tmp = i+1
-
-                                    queryText.replace(/,/g , " ");
-                                    var queryWords = queryText.split(" ")
-
-                                    var bestReview = {"entry":listingText[0],"count":0};
-
-                                    for (let entry of listingText) {
-                                        var words = entry.split(" "), count = 0;
-                                        for (let word of words) {
-                                            if(queryWords.contains(word.trim())) count++
-                                        }
-                                        if(bestReview["count"] < count) {
-                                            bestReview["entry"] = entry;
-                                            bestReview["count"] = count; 
-                                        }
+                            var k = 1;
+                            for (let listingArray of topListings) {
+                                listingText = listingArray[4];
+                                reviewBuffer = "";
+                                words = listingText.split(" ");
+                                for (let word of words) {
+                                    if(queryWords.contains(word)) {
+                                        reviewBuffer = reviewBuffer + " <span class='queryWord' style='padding:5px;background-color:#efe40e'>" + word + "</span> ";
+                                    } else {
+                                        reviewBuffer = reviewBuffer + " " + word;
                                     }
-
-                                    reviewBuffer = "";
-                                    words = bestReview["entry"].split(" ");
-                                    for (let word of words) {
-                                        if(queryWords.contains(word)) {
-                                            reviewBuffer = reviewBuffer + " <span class='queryWord' style='background-color:#efe40e'>" + word + "</span> ";
-                                        } else {
-                                            reviewBuffer = reviewBuffer + " " + word;
-                                        }
-                                    }
-
-                                    $(".checkboxes").append("<div class='checkbox'><label><input type='checkbox' name='listing" + tmp + "' value=''> <span id='doc" + tmp + "'></span> </label></div> <br> <hr>")
-
-                                    $("#doc"+tmp).append(reviewBuffer);
                                 }
+
+                                $(".checkboxes").append("<div class='checkbox'><label><input type='checkbox' name='listing" + k + "' value=''> <span id='doc" + k + "'></span> </label></div> <br> <hr>")
+
+                                $("#doc"+k).append(reviewBuffer);
+
+                                k++;
+
                             }
+
+                            // reviewBuffer = "";
+                            // words = bestReview["entry"].split(" ");
+                            // for (let word of words) {
+                            //     if(queryWords.contains(word)) {
+                            //         reviewBuffer = reviewBuffer + " <span class='queryWord' style='background-color:#efe40e'>" + word + "</span> ";
+                            //     } else {
+                            //         reviewBuffer = reviewBuffer + " " + word;
+                            //     }
+                            // }
+
+                            
 
                             // HIGHTLIGHT DEFAULT CRITERIA
                             $("span.criteria#All").addClass("selected");
