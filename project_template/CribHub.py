@@ -283,7 +283,6 @@ class CribHub:
         # neighborhood in both airbnb & nytimes -- CLEAN THIS
         for nbhd in both:
             count = len(set(self.neighborhood_to_listing_ids[nbhd]))
-
             neighborhood_to_score[nbhd] = a*airbnb_scores[nbhd]*math.log(count,6) + b*nytimes_scores[nbhd]
 
         # only airbnb neighborhoods
@@ -350,7 +349,7 @@ class CribHub:
             for rid, text in self.nytimes_id_to_review.iteritems():
                 review_score = self.get_nyt_review_score(query_svd, rid)
                 nbhd_rank = nbhd_ranks[self.nytimes_id_to_neighborhood[rid]]
-                review_ranking.append(['nytimes', nbhd_rank, rid, 0.6*review_score, text])
+                review_ranking.append(['nytimes', nbhd_rank, rid, review_score, text])
             documents = sorted(airbnb_ranking + review_ranking, key=lambda x: x[3], reverse=True)[:5]
 
             # replace full listing text for best review, for airbnb docs
@@ -442,7 +441,7 @@ class CribHub:
             for lid, text in listing_text:
                 listing_score = self.get_listing_score(airbnb_q_mod, str(lid))
                 nbhd_rank = nbhd_ranks[self.listing_id_to_neighborhood[str(lid)]]
-                listofreviews = self.get_best_review_for_text(airbnb_query_svd, text)
+                listofreviews = self.get_best_review_for_text(airbnb_q_mod, text)
                 for review, score in listofreviews:
                     airbnb_ranking.append(['airbnb', nbhd_rank, lid, score, review])
 
@@ -451,7 +450,7 @@ class CribHub:
         for rid, text in self.nytimes_id_to_review.iteritems():
             review_score = self.get_nyt_review_score(nytimes_q_mod, rid)
             nbhd_rank = nbhd_ranks[self.nytimes_id_to_neighborhood[rid]]
-            review_ranking.append(['nytimes', nbhd_rank, rid, 0.6*review_score, text])
+            review_ranking.append(['nytimes', nbhd_rank, rid, review_score, text])
 
         #documents = sorted(listing_ranking + review_ranking, key=lambda x: x[1])
         documents = sorted(airbnb_ranking + review_ranking, key=lambda x: x[3], reverse=True)[:5]
