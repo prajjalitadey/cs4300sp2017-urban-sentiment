@@ -192,16 +192,16 @@ class CribHub:
                     if neighborhood in topic_neighborhoods:
                         topic_neighborhood_scores[neighborhood] = all_neighborhood_scores[neighborhood]
                     else:
-                        topic_neighborhood_scores[neighborhood] = [(item[0], 0.6*item[1])for item in all_neighborhood_scores[neighborhood]]
+                        topic_neighborhood_scores[neighborhood] = [(item[0], 1.0*item[1])for item in all_neighborhood_scores[neighborhood]]
 
         neighborhood_to_score = {}
         topic_neighborhood_scores = all_neighborhood_scores
-
+        #print(topic_neighborhood_scores)
         for neighborhood, scores in topic_neighborhood_scores.iteritems():
             score_avg = np.mean([score[1] for score in scores])
             neighborhood_to_score[neighborhood] = score_avg
 
-        return neighborhood_to_score
+        return neighborhood_to_score, topic_neighborhood_scores
 
 
     def score_nytimes_neighborhoods(self, query):
@@ -323,20 +323,30 @@ class CribHub:
 
         for criteria in query_criteria:
             # get neighborhood score
-            scores = self.combine_scores(self.score_airbnb_neighborhoods(criteria), self.score_nytimes_neighborhoods(criteria))
+            a,listing_id_scores=self.score_airbnb_neighborhoods(criteria)
+            b= self.score_nytimes_neighborhoods(criteria)
+            scores = self.combine_scores(a, b)
+            print('a')
+            #print(a)
             nbhd_scores = sorted([[nbhd, score] for nbhd, score in scores.iteritems()], key=lambda x: x[1], reverse=True)
             nbhd_scores_enum = list(enumerate(nbhd_scores))
             nbhd_ranks = {nbhd[0]: rank for rank, nbhd in nbhd_scores_enum}
-
-
+            listing_scores=[]
+            for neighborhood in listing_id_scores:
+                listing_scores+=listing_id_scores[neighborhood]
+            #print(listing_scores)
             # get listing ids for top neighborhoods only
             # nested_list = [self.neighborhood_to_listing_ids[nbhd[0]] for nbhd in nbhd_scores[:5]]
             # airbnb_listing_ids = list(set([lid for sublist in nested_list for lid in sublist]))
-
+            sorted(listing_scores,key=lambda x: x[1], reverse=True)
+            sorted_listingids=listing_scores.sort(key=lambda x: x[1], reverse=True)
+            sorted_listingids=[x[0] for x in sorted_listingids]
+            print(sorted_listingids)
             i = 0
             airbnb_listing_ids = []
-            while (len(airbnb_listing_ids) < 100):
+            while (len(airbnb_listing_ids) < 5):
                 # print (type(nbhd_scores[i]))
+                
                 new_listing_ids = list(set([nbhd for nbhd in self.neighborhood_to_listing_ids[ nbhd_scores[i][0]]]))
                 print (len(new_listing_ids))
                 airbnb_listing_ids.extend( new_listing_ids)
@@ -346,7 +356,7 @@ class CribHub:
             print ("-" * 10 + "START: GETTING TEXT")
             airbnb_query_svd = self.get_query_svd(criteria, self.airbnb_word_to_index, self.airbnb_idf_values, self.airbnb_words_compressed)
             print (len(airbnb_listing_ids))
-            listing_text = self.get_text(airbnb_listing_ids)
+            listing_text = self.get_text(airbnb_listing_ids) #IMP
             print ("-" * 10 + "STOP: GETTING TEXT")
 
             airbnb_ranking = []
@@ -373,7 +383,7 @@ class CribHub:
 
             documents = sorted(airbnb_ranking + review_ranking, key=lambda x: x[3], reverse=True)[:10]
             # documents = sorted(documents, key=lambda x: x[1])[:10]
-
+            #print(documents)
             # replace full listing text for best review, for airbnb docs
             documents = [[doc[0], doc[1], doc[2], doc[3], re.sub('\\.', '', self.get_best_review_for_text(airbnb_query_svd, doc[4])[0])] if doc[0] is 'airbnb' else [doc[0], doc[1], doc[2], doc[3], re.sub('\\.', '', doc[4])] for doc in documents]
 
@@ -537,8 +547,11 @@ class CribHub:
         """ query parts from the parts table """
         try:
             placeholders = ", ".join(str(lid) for lid in listing_ids)
+            #print('PLaceholders are:')
+            #print(placeholders)
             query = "SELECT * FROM listingid_to_text_sep WHERE listing_id IN (%s)" % placeholders
             self.cur.execute(query)
+            #print('Got here!')
             rows = self.cur.fetchall()
             if separated:
                 rows = [(row[0], row[1].split('-----')) for row in rows]
@@ -565,14 +578,22 @@ class CribHub:
     def get_best_review_for_text(self, query_svd, text):
         reviews = text.split("-----")
 
-        print ("------------------------------------------------------NEW TEXT------------------------------------------------------")
+        #print ("------------------------------------------------------NEW TEXT------------------------------------------------------")
 
 
-        for item in reviews:
-            print ("--------------------------------------")
-            print (item)
-            print ("---------------------------------------")
+        #for item in reviews:
+            #print ("--------------------------------------")
+            #print (item)
+            #print ("---------------------------------------")
         reviews_svd = [(review, self.get_query_svd(review, self.airbnb_word_to_index, self.airbnb_idf_values, self.airbnb_words_compressed)) for review in reviews]
         review_scores = [(review, query_svd.dot(review_svd) / (la.norm(review_svd)+1)) for review, review_svd in reviews_svd]
         top_review = sorted(review_scores, key=lambda x: x[1], reverse=True)[0]
         return top_review
+if __name__ == '__main__':
+    #     query = "port authority"
+    
+    cribhub = CribHub()
+    # print ("AWS Loaded")
+    
+    m = cribhub.handle_query("airport")
+    #print(m['neighborhood_ranking'])
